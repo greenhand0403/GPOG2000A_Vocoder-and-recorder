@@ -1,0 +1,76 @@
+[General]
+Version=1.0
+Config=0
+ReleaseIntermediate=.\Release
+ReleaseOutput=.\Release
+DebudIntermediate=.\Debug
+DebugOutput=.\Debug
+EnableFunctionView=1
+DownloadPrompt=0
+DiffDownload=0
+CHECK_DOWNLOAD_VERIFY=1
+BodyName=GPOG2000A
+
+[SetLink]
+ExeFile=0
+Output=.\Debug\GPOG2000A_Demo.s37
+INTVEC=1
+STARTUP=0
+ALIGNRES=0
+ALIGNNUM=0
+FillUnusedNum=0
+INITTABLE=1
+NONPAGE0=0
+EnableCheckSPIMechanism=0
+
+[LIBRARY]
+Count=8
+LIB0=CMacro1232.lib
+LIB1=..\Library\GPCE5_DVR1800_V0.9.4.0.lib
+LIB2=..\Library\SACM_A1800_fptr_V0.9.4.lib
+LIB3=..\Library\GPCE_VolumeCompressor_V0.9.1.lib
+LIB4=..\Library\SACM_VC4_V1.0.1.0.lib
+LIB5=..\Library\CTS_V1.1.3.lib
+LIB6=..\Library\TouchProbeDriver_SingleTouch_V1.0.3.lib
+LIB7=..\Library\EnvDet_V1.1.1.lib
+
+[SYMBOL]
+Count=0
+
+[Option]
+CC_LOC=$(APPDIR)\toolchain\udocc
+CC_FLAG_D=-S -gstabs -Wall -mnonb_data -mglobal-var-ram -mISA=2.0
+CC_FLAG_R=-S -O1 -Wall -mglobal-var-ram -mISA=2.0
+AS_LOC=$(APPDIR)\toolchain\xasm16
+AS_FLAG_D=-t4 -d -sr -Wno-A2013
+AS_FLAG_R=-t4 -sr
+LD_LOC=$(APPDIR)\toolchain\xlink16_GPCE3
+LD_FLAG_D=-Wno-L0062 -Wno-L0064 -Wno-L0066 -blank 0x00
+LD_FLAG_R=-Wno-L0062 -blank 0x00
+DebugOpt=0
+ReleaseOpt=1
+IsGenMakefile=1
+IsGenAryfile=1
+IsGenRes=1
+IsInitGlobal=0
+IsGenList=0
+CurIsa=ISA20
+IsWall=0
+POINTER=1
+IsPage0RAM=0
+
+[AdvancedHard]
+nStackSize=65535
+
+[Beforebuild]
+Description=
+Count=0
+
+[Beforelink]
+Description=
+Count=0
+
+[Afterbuild]
+Description=
+Count=0
+

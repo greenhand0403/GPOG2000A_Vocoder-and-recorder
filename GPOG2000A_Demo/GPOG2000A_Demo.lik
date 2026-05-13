@@ -1,0 +1,377 @@
+Version: 3.0
+Options: tsk
+Obj: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\Debug\Resource.obj"
+Obj: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\Debug\main.obj"
+Obj: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\Debug\isr.obj"
+Obj: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\Debug\system.obj"
+Obj: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\Debug\BootCode_User.obj"
+Obj: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\Debug\SACM_DVR1800_User.obj"
+Obj: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\Debug\SPI_Flash.obj"
+Obj: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\Debug\SACM_A1800_fptr_User.obj"
+Obj: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\Debug\VolCompress_User.obj"
+Obj: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\Debug\ORAM_Arrangement.obj"
+Obj: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\Debug\ComparatorADC.obj"
+Obj: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\Debug\CTS_User.obj"
+Obj: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\Debug\TouchProbe_User.obj"
+Obj: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\Debug\EnvDet_User.obj"
+Obj: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\Debug\SACM_VC4_User.obj"
+Obj: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\Debug\tailor3_16K_a18.res"
+Obj: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\Debug\tk6_a18.res"
+Obj: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\Debug\FileMerger_ROM_bin.res"
+Lib: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\..\Library\EnvDet_V1.1.1.lib"
+Lib: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\..\Library\SACM_A1800_fptr_V0.9.4.lib"
+Lib: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\..\Library\GPCE5_DVR1800_V0.9.4.0.lib"
+Lib: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\..\Library\GPCE_VolumeCompressor_V0.9.1.lib"
+Lib: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\..\Library\SACM_VC4_V1.0.1.0.lib"
+Lib: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\..\Library\CTS_V1.1.3.lib"
+Lib: "D:\zwc\app\unSPIDE\library\CMacro\CMacro1232.lib"
+Output: "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\Debug\GPOG2000A_Demo_SPI.bin"
+Define: CODE in "main.obj" with _CODE_SPI_SEC 
+Define: DATA in "main.obj" with _DATA_SPI_SEC 
+Define: CODE in "isr.obj" with _CODE_SPI_SEC 
+Define: DATA in "isr.obj" with _DATA_SPI_SEC 
+Define: CODE in "system.obj" with _CODE_SPI_SEC 
+Define: DATA in "system.obj" with _DATA_SPI_SEC 
+Define: CODE in "BootCode_User.obj" with _CODE_SPI_SEC 
+Define: DATA in "BootCode_User.obj" with _DATA_SPI_SEC 
+Define: CODE in "SACM_DVR1800_User.obj" with _CODE_SPI_SEC 
+Define: DATA in "SACM_DVR1800_User.obj" with _DATA_SPI_SEC 
+Define: CODE in "SPI_Flash.obj" with _CODE_SPI_SEC 
+Define: DATA in "SPI_Flash.obj" with _DATA_SPI_SEC 
+Define: CODE in "SACM_A1800_fptr_User.obj" with _CODE_SPI_SEC 
+Define: DATA in "SACM_A1800_fptr_User.obj" with _DATA_SPI_SEC 
+Define: CODE in "VolCompress_User.obj" with _CODE_SPI_SEC 
+Define: DATA in "VolCompress_User.obj" with _DATA_SPI_SEC 
+Define: CODE in "ORAM_Arrangement.obj" with _CODE_SPI_SEC 
+Define: DATA in "ORAM_Arrangement.obj" with _DATA_SPI_SEC 
+Define: CODE in "ComparatorADC.obj" with _CODE_SPI_SEC 
+Define: DATA in "ComparatorADC.obj" with _DATA_SPI_SEC 
+Define: CODE in "CTS_User.obj" with _CODE_SPI_SEC 
+Define: DATA in "CTS_User.obj" with _DATA_SPI_SEC 
+Define: CODE in "TouchProbe_User.obj" with _CODE_SPI_SEC 
+Define: DATA in "TouchProbe_User.obj" with _DATA_SPI_SEC 
+Define: CODE in "EnvDet_User.obj" with _CODE_SPI_SEC 
+Define: DATA in "EnvDet_User.obj" with _DATA_SPI_SEC 
+Define: CODE in "SACM_VC4_User.obj" with _CODE_SPI_SEC 
+Define: DATA in "SACM_VC4_User.obj" with _DATA_SPI_SEC 
+Define: __sn_section_RES_TAILOR3_16K_A18 in "tailor3_16K_a18.res" with _RESOURCE_SPI_SEC 
+Define: __sn_section_RES_TK6_A18 in "tk6_a18.res" with _RESOURCE_SPI_SEC 
+Define: __sn_section_RES_FILEMERGER_ROM_BIN in "FileMerger_ROM_bin.res" with _RESOURCE_SPI_SEC 
+Locate: _CODE_SPI_SEC at 9800
+Locate: _DATA_SPI_SEC after _CODE_SPI_SEC
+Locate: _RESOURCE_SPI_SEC at 20000
+Locate: __sn_init_table at 11940
+Locate: IRAM after __sn_init_table linkat #RAM
+Locate: IRam_Bank0 after __sn_init_table linkat #RAM
+Locate: SleepCode_RAMCode_SEC in "system.obj" at 10000 linkat 1000
+;Align: SleepCode_RAMCode_SEC in "system.obj" with 0 
+Locate: SPIFC_RAMCode_SEC_0 in "SPI_Flash.obj" at 12100 linkat 10
+;Align: SPIFC_RAMCode_SEC_0 in "SPI_Flash.obj" with 0 
+Locate: SPIFC_RAMCode_SEC_1 in "SPI_Flash.obj" at 12200 linkat 66
+;Align: SPIFC_RAMCode_SEC_1 in "SPI_Flash.obj" with 0 
+Locate: SPIFC_RAMCode_SEC_2 in "SPI_Flash.obj" at 12380 linkat 66
+;Align: SPIFC_RAMCode_SEC_2 in "SPI_Flash.obj" with 0 
+Locate: DVR1800_ISR_RAMCode_SEC in "SACM_DVR1800_User.obj" at 12600 linkat 770
+;Align: DVR1800_ISR_RAMCode_SEC in "SACM_DVR1800_User.obj" with 0 
+Locate: CMPADC_ISR_RAMCode_SEC in "ComparatorADC.obj" at 12680 linkat 800
+;Align: CMPADC_ISR_RAMCode_SEC in "ComparatorADC.obj" with 0 
+;section has ORG setting:
+;Locate: OVERLAP_A1800_fptr_API_BLOCK in "ORAM_Arrangement.obj" at 10 
+;Align: OVERLAP_A1800_fptr_API_BLOCK in "ORAM_Arrangement.obj" with 0 
+;section has ORG setting:
+;Locate: OVERLAP_A1800_fptr_RAM_BLOCK in "ORAM_Arrangement.obj" at 13 
+;Align: OVERLAP_A1800_fptr_RAM_BLOCK in "ORAM_Arrangement.obj" with 0 
+;section has ORG setting:
+;Locate: OVERLAP_A1800_DM_BLOCK_Global in "ORAM_Arrangement.obj" at 51 
+;Align: OVERLAP_A1800_DM_BLOCK_Global in "ORAM_Arrangement.obj" with 0 
+;section has ORG setting:
+;Locate: OVERLAP_A1800_DM_BLOCK_Local in "ORAM_Arrangement.obj" at 106 
+;Align: OVERLAP_A1800_DM_BLOCK_Local in "ORAM_Arrangement.obj" with 0 
+;section has ORG setting:
+;Locate: OVERLAP_A1800_fptr_EVENT_BLOCK in "ORAM_Arrangement.obj" at 252 
+;Align: OVERLAP_A1800_fptr_EVENT_BLOCK in "ORAM_Arrangement.obj" with 0 
+;section has ORG setting:
+;Locate: OVERLAP_DVR1800_RAM_BLOCK in "ORAM_Arrangement.obj" at 188 
+;Align: OVERLAP_DVR1800_RAM_BLOCK in "ORAM_Arrangement.obj" with 0 
+;section has ORG setting:
+;Locate: OVERLAP_DVR1800_DM_BLOCK in "ORAM_Arrangement.obj" at 443 
+;Align: OVERLAP_DVR1800_DM_BLOCK in "ORAM_Arrangement.obj" with 0 
+;section has ORG setting:
+;Locate: OVERLAP_DVR1800_API_BLOCK in "ORAM_Arrangement.obj" at 76F 
+;Align: OVERLAP_DVR1800_API_BLOCK in "ORAM_Arrangement.obj" with 0 
+;section has ORG setting:
+;Locate: DVR1800_ISR_RAMCode_SEC in "ORAM_Arrangement.obj" at 770 
+;Align: DVR1800_ISR_RAMCode_SEC in "ORAM_Arrangement.obj" with 0 
+;section has ORG setting:
+;Locate: CMPADC_ISR_RAMCode_SEC in "ORAM_Arrangement.obj" at 800 
+;Align: CMPADC_ISR_RAMCode_SEC in "ORAM_Arrangement.obj" with 0 
+;section has ORG setting:
+;Locate: OVERLAP_VC4_RAM in "ORAM_Arrangement.obj" at 257 
+;Align: OVERLAP_VC4_RAM in "ORAM_Arrangement.obj" with 0 
+;section has ORG setting:
+;Locate: OVERLAP_VC4_API_BLOCK in "ORAM_Arrangement.obj" at 50E 
+;Align: OVERLAP_VC4_API_BLOCK in "ORAM_Arrangement.obj" with 0 
+;section has ORG setting:
+;Locate: OVERLAP_A18_DACOUT_RAM_BLOCK in "ORAM_Arrangement.obj" at 548 
+;Align: OVERLAP_A18_DACOUT_RAM_BLOCK in "ORAM_Arrangement.obj" with 0 
+;section has ORG setting:
+;Locate: OVERLAP_VC4_BUFFER_RAM_BLOCK in "ORAM_Arrangement.obj" at 688 
+;Align: OVERLAP_VC4_BUFFER_RAM_BLOCK in "ORAM_Arrangement.obj" with 0 
+;section has ORG setting:
+;Locate: EFFECT_VAD_ORAM_SECTION in "ORAM_Arrangement.obj" at 868 
+;Align: EFFECT_VAD_ORAM_SECTION in "ORAM_Arrangement.obj" with 0 
+;section has ORG setting:
+;Locate: OVERLAP_VC4_BUFFER in "ORAM_Arrangement.obj" at 86D 
+;Align: OVERLAP_VC4_BUFFER in "ORAM_Arrangement.obj" with 0 
+;section has ORG setting:
+;Locate: OVERLAP_DM_RTVM in "ORAM_Arrangement.obj" at A4D 
+;Align: OVERLAP_DM_RTVM in "ORAM_Arrangement.obj" with 0 
+;section has ORG setting:
+;Locate: OVERLAP_VC4_RAM_BLOCK in "ORAM_Arrangement.obj" at C63 
+;Align: OVERLAP_VC4_RAM_BLOCK in "ORAM_Arrangement.obj" with 0 
+;Locate: TEXT in "isr.obj" at 9821 
+;Align: TEXT in "isr.obj" with 0 
+;Locate: IRAM in "main.obj" at 11970  linkat CF9 
+;Align: IRAM in "main.obj" with 0 
+;Locate: IRAM in "EnvDet_API" of "EnvDet_V1.1.1.lib"  at 11965  linkat CEE 
+;Align: IRAM in "EnvDet_API" of "EnvDet_V1.1.1.lib"  with 0 
+;Locate: IRAM in "SACM_A1800_fptr_API" of "SACM_A1800_fptr_V0.9.4.lib"  at 11966  linkat CEF 
+;Align: IRAM in "SACM_A1800_fptr_API" of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: IRAM in "SACM_VC4_API" of "SACM_VC4_V1.0.1.0.lib"  at 1196B  linkat CF4 
+;Align: IRAM in "SACM_VC4_API" of "SACM_VC4_V1.0.1.0.lib"  with 0 
+;Locate: IRAM in "CTS_Sensor" of "CTS_V1.1.3.lib"  at 11967  linkat CF0 
+;Align: IRAM in "CTS_Sensor" of "CTS_V1.1.3.lib"  with 0 
+;Locate: IRAM in "SACM_DVR1800_Encode" of "GPCE5_DVR1800_V0.9.4.0.lib"  at 11968  linkat CF1 
+;Align: IRAM in "SACM_DVR1800_Encode" of "GPCE5_DVR1800_V0.9.4.0.lib"  with 0 
+;Locate: IRAM in "SACM_VC4_API_C" of "SACM_VC4_V1.0.1.0.lib"  at 1196D  linkat CF6 
+;Align: IRAM in "SACM_VC4_API_C" of "SACM_VC4_V1.0.1.0.lib"  with 0 
+;Locate: IRAM in "SACM_VC4_Decode" of "SACM_VC4_V1.0.1.0.lib"  at 11969  linkat CF2 
+;Align: IRAM in "SACM_VC4_Decode" of "SACM_VC4_V1.0.1.0.lib"  with 0 
+;Locate: IRAM in "SACM_A1800_fptr_Decode" of "SACM_A1800_fptr_V0.9.4.lib"  at 1196A  linkat CF3 
+;Align: IRAM in "SACM_A1800_fptr_Decode" of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: RAM in "main.obj" at C94 
+;Align: RAM in "main.obj" with 0 
+;Locate: RAM in "system.obj" at C9E 
+;Align: RAM in "system.obj" with 0 
+;Locate: RAM in "SACM_DVR1800_User.obj" at CA5 
+;Align: RAM in "SACM_DVR1800_User.obj" with 0 
+;Locate: RAM in "SPI_Flash.obj" at CA9 
+;Align: RAM in "SPI_Flash.obj" with 0 
+;Locate: RAM in "SACM_A1800_fptr_User.obj" at CAC 
+;Align: RAM in "SACM_A1800_fptr_User.obj" with 0 
+;Locate: RAM in "ComparatorADC.obj" at CB1 
+;Align: RAM in "ComparatorADC.obj" with 0 
+;Locate: RAM in "CTS_User.obj" at CB7 
+;Align: RAM in "CTS_User.obj" with 0 
+;Locate: RAM in "TouchProbe_User.obj" at CCA 
+;Align: RAM in "TouchProbe_User.obj" with 0 
+;Locate: RAM in "SACM_VC4_User.obj" at CDA 
+;Align: RAM in "SACM_VC4_User.obj" with 0 
+;Locate: RAM in "EnvDet_API" of "EnvDet_V1.1.1.lib"  at CDF 
+;Align: RAM in "EnvDet_API" of "EnvDet_V1.1.1.lib"  with 0 
+;Locate: RAM in "VolumeCompressor" of "GPCE_VolumeCompressor_V0.9.1.lib"  at CE9 
+;Align: RAM in "VolumeCompressor" of "GPCE_VolumeCompressor_V0.9.1.lib"  with 0 
+;Locate: RAM in "SACM_VC4_Decode" of "SACM_VC4_V1.0.1.0.lib"  at CED 
+;Align: RAM in "SACM_VC4_Decode" of "SACM_VC4_V1.0.1.0.lib"  with 0 
+;Locate: OVERLAP_VC4_RAM in "main.obj" at 257 
+;Align: OVERLAP_VC4_RAM in "main.obj" with 0 
+;Locate: OVERLAP_A18_DACOUT_RAM_BLOCK in "SACM_A1800_fptr_User.obj" at 548 
+;Align: OVERLAP_A18_DACOUT_RAM_BLOCK in "SACM_A1800_fptr_User.obj" with 0 
+;Locate: OVERLAP_A1800_fptr_API_BLOCK in "ORAM_Arrangement.obj" at 10 
+;Locate: OVERLAP_A1800_fptr_RAM_BLOCK in "ORAM_Arrangement.obj" at 13 
+;Locate: OVERLAP_A1800_DM_BLOCK_Global in "ORAM_Arrangement.obj" at 51 
+;Locate: OVERLAP_A1800_DM_BLOCK_Local in "ORAM_Arrangement.obj" at 106 
+;Locate: OVERLAP_A1800_fptr_EVENT_BLOCK in "ORAM_Arrangement.obj" at 252 
+;Locate: OVERLAP_DVR1800_RAM_BLOCK in "ORAM_Arrangement.obj" at 188 
+;Locate: OVERLAP_DVR1800_DM_BLOCK in "ORAM_Arrangement.obj" at 443 
+;Locate: OVERLAP_DVR1800_API_BLOCK in "ORAM_Arrangement.obj" at 76F 
+;Locate: DVR1800_ISR_RAMCode_SEC in "ORAM_Arrangement.obj" at 770 
+;Locate: CMPADC_ISR_RAMCode_SEC in "ORAM_Arrangement.obj" at 800 
+;Locate: OVERLAP_VC4_RAM in "ORAM_Arrangement.obj" at 257 
+;Locate: OVERLAP_VC4_API_BLOCK in "ORAM_Arrangement.obj" at 50E 
+;Locate: OVERLAP_A18_DACOUT_RAM_BLOCK in "ORAM_Arrangement.obj" at 548 
+;Locate: OVERLAP_VC4_BUFFER_RAM_BLOCK in "ORAM_Arrangement.obj" at 688 
+;Locate: EFFECT_VAD_ORAM_SECTION in "ORAM_Arrangement.obj" at 868 
+;Locate: OVERLAP_VC4_BUFFER in "ORAM_Arrangement.obj" at 86D 
+;Locate: OVERLAP_DM_RTVM in "ORAM_Arrangement.obj" at A4D 
+;Locate: OVERLAP_VC4_RAM_BLOCK in "ORAM_Arrangement.obj" at C63 
+;Locate: OVERLAP_A1800_fptr_API_BLOCK in "SACM_A1800_fptr_API" of "SACM_A1800_fptr_V0.9.4.lib"  at 10 
+;Align: OVERLAP_A1800_fptr_API_BLOCK in "SACM_A1800_fptr_API" of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: OVERLAP_DVR1800_API_BLOCK in "SACM_DVR1800_API" of "GPCE5_DVR1800_V0.9.4.0.lib"  at 76F 
+;Align: OVERLAP_DVR1800_API_BLOCK in "SACM_DVR1800_API" of "GPCE5_DVR1800_V0.9.4.0.lib"  with 0 
+;Locate: OVERLAP_A1800_fptr_EVENT_BLOCK in "A1800_fptr_Event " of "SACM_A1800_fptr_V0.9.4.lib"  at 252 
+;Align: OVERLAP_A1800_fptr_EVENT_BLOCK in "A1800_fptr_Event " of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: OVERLAP_VC4_API_BLOCK in "SACM_VC4_API" of "SACM_VC4_V1.0.1.0.lib"  at 50E 
+;Align: OVERLAP_VC4_API_BLOCK in "SACM_VC4_API" of "SACM_VC4_V1.0.1.0.lib"  with 0 
+;Locate: OVERLAP_VC4_BUFFER_RAM_BLOCK in "SACM_VC4_API" of "SACM_VC4_V1.0.1.0.lib"  at 688 
+;Align: OVERLAP_VC4_BUFFER_RAM_BLOCK in "SACM_VC4_API" of "SACM_VC4_V1.0.1.0.lib"  with 0 
+;Locate: OVERLAP_CTS_API_RAM in "CTS_Sensor" of "CTS_V1.1.3.lib"  at C76 
+;Align: OVERLAP_CTS_API_RAM in "CTS_Sensor" of "CTS_V1.1.3.lib"  with 0 
+;Locate: OVERLAP_DVR1800_RAM_BLOCK in "SACM_DVR1800_Encode" of "GPCE5_DVR1800_V0.9.4.0.lib"  at 188 
+;Align: OVERLAP_DVR1800_RAM_BLOCK in "SACM_DVR1800_Encode" of "GPCE5_DVR1800_V0.9.4.0.lib"  with 0 
+;Locate: OVERLAP_VC4_BUFFER in "SACM_VC4_API_C" of "SACM_VC4_V1.0.1.0.lib"  at 86D 
+;Align: OVERLAP_VC4_BUFFER in "SACM_VC4_API_C" of "SACM_VC4_V1.0.1.0.lib"  with 0 
+;Locate: OVERLAP_DM_RTVM in "RTVM" of "SACM_VC4_V1.0.1.0.lib"  at A4D 
+;Align: OVERLAP_DM_RTVM in "RTVM" of "SACM_VC4_V1.0.1.0.lib"  with 0 
+;Locate: OVERLAP_VC4_RAM_BLOCK in "SACM_VC4_Decode" of "SACM_VC4_V1.0.1.0.lib"  at C63 
+;Align: OVERLAP_VC4_RAM_BLOCK in "SACM_VC4_Decode" of "SACM_VC4_V1.0.1.0.lib"  with 0 
+;Locate: OVERLAP_A1800_fptr_RAM_BLOCK in "SACM_A1800_fptr_Decode" of "SACM_A1800_fptr_V0.9.4.lib"  at 13 
+;Align: OVERLAP_A1800_fptr_RAM_BLOCK in "SACM_A1800_fptr_Decode" of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: OVERLAP_DVR1800_DM_BLOCK in "DVR1800_Codec" of "GPCE5_DVR1800_V0.9.4.0.lib"  at 443 
+;Align: OVERLAP_DVR1800_DM_BLOCK in "DVR1800_Codec" of "GPCE5_DVR1800_V0.9.4.0.lib"  with 0 
+;Locate: EFFECT_VAD_ORAM_SECTION in "VAD" of "SACM_VC4_V1.0.1.0.lib"  at 868 
+;Align: EFFECT_VAD_ORAM_SECTION in "VAD" of "SACM_VC4_V1.0.1.0.lib"  with 0 
+;Locate: OVERLAP_A1800_DM_BLOCK_Global in "A1800_Codec" of "SACM_A1800_fptr_V0.9.4.lib"  at 51 
+;Align: OVERLAP_A1800_DM_BLOCK_Global in "A1800_Codec" of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: OVERLAP_A1800_DM_BLOCK_Local in "A1800_Codec" of "SACM_A1800_fptr_V0.9.4.lib"  at 106 
+;Align: OVERLAP_A1800_DM_BLOCK_Local in "A1800_Codec" of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: CODE in "Resource.obj" at 109E5 
+;Align: CODE in "Resource.obj" with 0 
+;Locate: BootCode_SEC in "BootCode_User.obj" at 8100 
+;Align: BootCode_SEC in "BootCode_User.obj" with 0 
+;Locate: CODE in "EnvDet_API" of "EnvDet_V1.1.1.lib"  at 109FF 
+;Align: CODE in "EnvDet_API" of "EnvDet_V1.1.1.lib"  with 0 
+;Locate: EnvDet_API_IM_BLOCK_1_1 in "EnvDet_API" of "EnvDet_V1.1.1.lib"  at 10641 
+;Align: EnvDet_API_IM_BLOCK_1_1 in "EnvDet_API" of "EnvDet_V1.1.1.lib"  with 0 
+;Locate: EnvDet_ISR_Service_BLOCK in "EnvDet_API" of "EnvDet_V1.1.1.lib"  at 103B7 
+;Align: EnvDet_ISR_Service_BLOCK in "EnvDet_API" of "EnvDet_V1.1.1.lib"  with 0 
+;Locate: CODE in "SACM_A1800_fptr_API" of "SACM_A1800_fptr_V0.9.4.lib"  at 10A07 
+;Align: CODE in "SACM_A1800_fptr_API" of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: A1800_fptr_API_IM_BLOCK_1_1 in "SACM_A1800_fptr_API" of "SACM_A1800_fptr_V0.9.4.lib"  at FE3E 
+;Align: A1800_fptr_API_IM_BLOCK_1_1 in "SACM_A1800_fptr_API" of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: A1800_fptr_API_IM_BLOCK_2_1 in "SACM_A1800_fptr_API" of "SACM_A1800_fptr_V0.9.4.lib"  at 107D0 
+;Align: A1800_fptr_API_IM_BLOCK_2_1 in "SACM_A1800_fptr_API" of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: A1800_fptr_API_IM_BLOCK_1_2 in "SACM_A1800_fptr_API" of "SACM_A1800_fptr_V0.9.4.lib"  at 109D5 
+;Align: A1800_fptr_API_IM_BLOCK_1_2 in "SACM_A1800_fptr_API" of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: A1800_fptr_ISR_Service_BLOCK in "SACM_A1800_fptr_API" of "SACM_A1800_fptr_V0.9.4.lib"  at 10325 
+;Align: A1800_fptr_ISR_Service_BLOCK in "SACM_A1800_fptr_API" of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: A1800_fptr_API_IM_BLOCK_2_2 in "SACM_A1800_fptr_API" of "SACM_A1800_fptr_V0.9.4.lib"  at FFFA 
+;Align: A1800_fptr_API_IM_BLOCK_2_2 in "SACM_A1800_fptr_API" of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: CODE in "SACM_DVR1800_API" of "GPCE5_DVR1800_V0.9.4.0.lib"  at 10A0F 
+;Align: CODE in "SACM_DVR1800_API" of "GPCE5_DVR1800_V0.9.4.0.lib"  with 0 
+;Locate: SACM_DVR1800_ROM_BLOCK in "SACM_DVR1800_API" of "GPCE5_DVR1800_V0.9.4.0.lib"  at 10097 
+;Align: SACM_DVR1800_ROM_BLOCK in "SACM_DVR1800_API" of "GPCE5_DVR1800_V0.9.4.0.lib"  with 0 
+;Locate: A1800_fptr_Evt_IM_BLOCK_2_1 in "A1800_fptr_Event " of "SACM_A1800_fptr_V0.9.4.lib"  at 10999 
+;Align: A1800_fptr_Evt_IM_BLOCK_2_1 in "A1800_fptr_Event " of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: A1800_fptr_Evt_IM_BLOCK_1_1 in "A1800_fptr_Event " of "SACM_A1800_fptr_V0.9.4.lib"  at 108AA 
+;Align: A1800_fptr_Evt_IM_BLOCK_1_1 in "A1800_fptr_Event " of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: A1800_fptr_Evt_IM_BLOCK_2_2 in "A1800_fptr_Event " of "SACM_A1800_fptr_V0.9.4.lib"  at 10145 
+;Align: A1800_fptr_Evt_IM_BLOCK_2_2 in "A1800_fptr_Event " of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: A1800_fptr_Evt_IM_BLOCK_1_2 in "A1800_fptr_Event " of "SACM_A1800_fptr_V0.9.4.lib"  at 10982 
+;Align: A1800_fptr_Evt_IM_BLOCK_1_2 in "A1800_fptr_Event " of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: A1800_fptr_Event_ISR_BLOCK in "A1800_fptr_Event " of "SACM_A1800_fptr_V0.9.4.lib"  at 10877 
+;Align: A1800_fptr_Event_ISR_BLOCK in "A1800_fptr_Event " of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: A1800_fptr_Evt_IM_BLOCK_1_3 in "A1800_fptr_Event " of "SACM_A1800_fptr_V0.9.4.lib"  at 10930 
+;Align: A1800_fptr_Evt_IM_BLOCK_1_3 in "A1800_fptr_Event " of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: CODE in "VolumeCompressor" of "GPCE_VolumeCompressor_V0.9.1.lib"  at 1028C 
+;Align: CODE in "VolumeCompressor" of "GPCE_VolumeCompressor_V0.9.1.lib"  with 0 
+;Locate: CODE in "SACM_VC4_API" of "SACM_VC4_V1.0.1.0.lib"  at 1075C 
+;Align: CODE in "SACM_VC4_API" of "SACM_VC4_V1.0.1.0.lib"  with 0 
+;Locate: VC4_API_IM_BLOCK_1_1 in "SACM_VC4_API" of "SACM_VC4_V1.0.1.0.lib"  at F547 
+;Align: VC4_API_IM_BLOCK_1_1 in "SACM_VC4_API" of "SACM_VC4_V1.0.1.0.lib"  with 0 
+;Locate: PCM_API_IM_BLOCK_2_1 in "SACM_VC4_API" of "SACM_VC4_V1.0.1.0.lib"  at 104C7 
+;Align: PCM_API_IM_BLOCK_2_1 in "SACM_VC4_API" of "SACM_VC4_V1.0.1.0.lib"  with 0 
+;Locate: PCM_API_IM_BLOCK_1_2 in "SACM_VC4_API" of "SACM_VC4_V1.0.1.0.lib"  at FFE1 
+;Align: PCM_API_IM_BLOCK_1_2 in "SACM_VC4_API" of "SACM_VC4_V1.0.1.0.lib"  with 0 
+;Locate: PCM_API_IM_BLOCK_1_3 in "SACM_VC4_API" of "SACM_VC4_V1.0.1.0.lib"  at FC2A 
+;Align: PCM_API_IM_BLOCK_1_3 in "SACM_VC4_API" of "SACM_VC4_V1.0.1.0.lib"  with 0 
+;Locate: CODE in "CTS_Sensor" of "CTS_V1.1.3.lib"  at ECC3 
+;Align: CODE in "CTS_Sensor" of "CTS_V1.1.3.lib"  with 0 
+;Locate: CTS_ISR_Service_ROMBLOCK in "CTS_Sensor" of "CTS_V1.1.3.lib"  at 10809 
+;Align: CTS_ISR_Service_ROMBLOCK in "CTS_Sensor" of "CTS_V1.1.3.lib"  with 0 
+;Locate: SACM_DVR1800_ENCODE_ROM_BLOCK in "SACM_DVR1800_Encode" of "GPCE5_DVR1800_V0.9.4.0.lib"  at 1054A 
+;Align: SACM_DVR1800_ENCODE_ROM_BLOCK in "SACM_DVR1800_Encode" of "GPCE5_DVR1800_V0.9.4.0.lib"  with 0 
+;Locate: CODE in "SACM_VC4_API_C" of "SACM_VC4_V1.0.1.0.lib"  at EF55 
+;Align: CODE in "SACM_VC4_API_C" of "SACM_VC4_V1.0.1.0.lib"  with 0 
+;Locate: CODE in "RTVM" of "SACM_VC4_V1.0.1.0.lib"  at F6F0 
+;Align: CODE in "RTVM" of "SACM_VC4_V1.0.1.0.lib"  with 0 
+;Locate: SACM_VC4_DECODE_ROM_BLOCK in "SACM_VC4_Decode" of "SACM_VC4_V1.0.1.0.lib"  at F368 
+;Align: SACM_VC4_DECODE_ROM_BLOCK in "SACM_VC4_Decode" of "SACM_VC4_V1.0.1.0.lib"  with 0 
+;Locate: SACM_A1800_fptr_DECODE_BLOCK in "SACM_A1800_fptr_Decode" of "SACM_A1800_fptr_V0.9.4.lib"  at F87F 
+;Align: SACM_A1800_fptr_DECODE_BLOCK in "SACM_A1800_fptr_Decode" of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: CODE in "CTS_ReferencePad" of "CTS_V1.1.3.lib"  at 108D9 
+;Align: CODE in "CTS_ReferencePad" of "CTS_V1.1.3.lib"  with 0 
+;Locate: SACM_DVR1800_IM_BLOCK_1 in "DVR1800_Codec" of "GPCE5_DVR1800_V0.9.4.0.lib"  at 10905 
+;Align: SACM_DVR1800_IM_BLOCK_1 in "DVR1800_Codec" of "GPCE5_DVR1800_V0.9.4.0.lib"  with 0 
+;Locate: SACM_DVR1800_IM_BLOCK_2 in "DVR1800_Codec" of "GPCE5_DVR1800_V0.9.4.0.lib"  at 10841 
+;Align: SACM_DVR1800_IM_BLOCK_2 in "DVR1800_Codec" of "GPCE5_DVR1800_V0.9.4.0.lib"  with 0 
+;Locate: SACM_DVR1800_IM_BLOCK_3 in "DVR1800_Codec" of "GPCE5_DVR1800_V0.9.4.0.lib"  at E993 
+;Align: SACM_DVR1800_IM_BLOCK_3 in "DVR1800_Codec" of "GPCE5_DVR1800_V0.9.4.0.lib"  with 0 
+;Locate: SACM_DVR1800_IM_BLOCK_4 in "DVR1800_Codec" of "GPCE5_DVR1800_V0.9.4.0.lib"  at D557 
+;Align: SACM_DVR1800_IM_BLOCK_4 in "DVR1800_Codec" of "GPCE5_DVR1800_V0.9.4.0.lib"  with 0 
+;Locate: SACM_DVR1800_IM_BLOCK_5 in "DVR1800_Codec" of "GPCE5_DVR1800_V0.9.4.0.lib"  at FD3C 
+;Align: SACM_DVR1800_IM_BLOCK_5 in "DVR1800_Codec" of "GPCE5_DVR1800_V0.9.4.0.lib"  with 0 
+;Locate: SACM_DVR1800_IM_BLOCK_6 in "DVR1800_Codec" of "GPCE5_DVR1800_V0.9.4.0.lib"  at FB08 
+;Align: SACM_DVR1800_IM_BLOCK_6 in "DVR1800_Codec" of "GPCE5_DVR1800_V0.9.4.0.lib"  with 0 
+;Locate: SACM_DVR1800_IM_BLOCK_7 in "DVR1800_Codec" of "GPCE5_DVR1800_V0.9.4.0.lib"  at 106B4 
+;Align: SACM_DVR1800_IM_BLOCK_7 in "DVR1800_Codec" of "GPCE5_DVR1800_V0.9.4.0.lib"  with 0 
+;Locate: SACM_DVR1800_IM_BLOCK_8 in "DVR1800_Codec" of "GPCE5_DVR1800_V0.9.4.0.lib"  at FFFD 
+;Align: SACM_DVR1800_IM_BLOCK_8 in "DVR1800_Codec" of "GPCE5_DVR1800_V0.9.4.0.lib"  with 0 
+;Locate: SACM_DVR1800_PMOut_BLOCK in "DVR1800_Codec" of "GPCE5_DVR1800_V0.9.4.0.lib"  at A9D3 
+;Align: SACM_DVR1800_PMOut_BLOCK in "DVR1800_Codec" of "GPCE5_DVR1800_V0.9.4.0.lib"  with 0 
+;Locate: CODE in "Change" of "SACM_VC4_V1.0.1.0.lib"  at DE12 
+;Align: CODE in "Change" of "SACM_VC4_V1.0.1.0.lib"  with 0 
+;Locate: EFFECT_VAD_CODE_SECTION in "VAD" of "SACM_VC4_V1.0.1.0.lib"  at 10442 
+;Align: EFFECT_VAD_CODE_SECTION in "VAD" of "SACM_VC4_V1.0.1.0.lib"  with 0 
+;Locate: A1800_IM_BLOCK_3_2 in "A1800_Codec" of "SACM_A1800_fptr_V0.9.4.lib"  at 101EC 
+;Align: A1800_IM_BLOCK_3_2 in "A1800_Codec" of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: A1800_IM_BLOCK_3_1 in "A1800_Codec" of "SACM_A1800_fptr_V0.9.4.lib"  at 10719 
+;Align: A1800_IM_BLOCK_3_1 in "A1800_Codec" of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: A1800_IM_BLOCK_1_1 in "A1800_Codec" of "SACM_A1800_fptr_V0.9.4.lib"  at 10797 
+;Align: A1800_IM_BLOCK_1_1 in "A1800_Codec" of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: A1800_IM_BLOCK_2_2 in "A1800_Codec" of "SACM_A1800_fptr_V0.9.4.lib"  at E259 
+;Align: A1800_IM_BLOCK_2_2 in "A1800_Codec" of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: A1800_IM_BLOCK_2_3 in "A1800_Codec" of "SACM_A1800_fptr_V0.9.4.lib"  at E61F 
+;Align: A1800_IM_BLOCK_2_3 in "A1800_Codec" of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: A1800_IM_BLOCK_2_4 in "A1800_Codec" of "SACM_A1800_fptr_V0.9.4.lib"  at FF31 
+;Align: A1800_IM_BLOCK_2_4 in "A1800_Codec" of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: A1800_IM_BLOCK_2_1 in "A1800_Codec" of "SACM_A1800_fptr_V0.9.4.lib"  at F9DE 
+;Align: A1800_IM_BLOCK_2_1 in "A1800_Codec" of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: A1800_PM_OUT_BLOCK in "A1800_Codec" of "SACM_A1800_fptr_V0.9.4.lib"  at C046 
+;Align: A1800_PM_OUT_BLOCK in "A1800_Codec" of "SACM_A1800_fptr_V0.9.4.lib"  with 0 
+;Locate: CODE in "muliu2" of "CMacro1232.lib"  at 109C3 
+;Align: CODE in "muliu2" of "CMacro1232.lib"  with 0 
+;Locate: CODE in "divu2" of "CMacro1232.lib"  at 105CA 
+;Align: CODE in "divu2" of "CMacro1232.lib"  with 0 
+;Locate: SACM_VC4_LIBCODE_BLOCK_x in "Dsp" of "SACM_VC4_V1.0.1.0.lib"  at F173 
+;Align: SACM_VC4_LIBCODE_BLOCK_x in "Dsp" of "SACM_VC4_V1.0.1.0.lib"  with 0 
+;Locate: CODE in "__clz32" of "CMacro1232.lib"  at 109AF 
+;Align: CODE in "__clz32" of "CMacro1232.lib"  with 0 
+;Locate: CODE in "__divi32_n" of "CMacro1232.lib"  at 1095A 
+;Align: CODE in "__divi32_n" of "CMacro1232.lib"  with 0 
+;Locate: CODE in "lshiu2" of "CMacro1232.lib"  at 109F5 
+;Align: CODE in "lshiu2" of "CMacro1232.lib"  with 0 
+;Locate: CODE in "_GPTag" of "CMacro1232.lib"  at 10A17 
+;Align: CODE in "_GPTag" of "CMacro1232.lib"  with 0 
+;Locate: _CODE_SPI_SEC in "EnvDet_User.obj" at 9800 
+;Align: _CODE_SPI_SEC in "EnvDet_User.obj" with 0 
+;Locate: _CODE_SPI_SEC in "VolCompress_User.obj" at 9E98 
+;Align: _CODE_SPI_SEC in "VolCompress_User.obj" with 0 
+;Locate: _CODE_SPI_SEC in "SPI_Flash.obj" at 9EBE 
+;Align: _CODE_SPI_SEC in "SPI_Flash.obj" with 0 
+;Locate: _CODE_SPI_SEC in "ComparatorADC.obj" at 9EF3 
+;Align: _CODE_SPI_SEC in "ComparatorADC.obj" with 0 
+;Locate: _CODE_SPI_SEC in "BootCode_User.obj" at 9F28 
+;Align: _CODE_SPI_SEC in "BootCode_User.obj" with 0 
+;Locate: _CODE_SPI_SEC in "SACM_DVR1800_User.obj" at 9F77 
+;Align: _CODE_SPI_SEC in "SACM_DVR1800_User.obj" with 0 
+;Locate: _CODE_SPI_SEC in "TouchProbe_User.obj" at A009 
+;Align: _CODE_SPI_SEC in "TouchProbe_User.obj" with 0 
+;Locate: _CODE_SPI_SEC in "SACM_VC4_User.obj" at A09C 
+;Align: _CODE_SPI_SEC in "SACM_VC4_User.obj" with 0 
+;Locate: _CODE_SPI_SEC in "CTS_User.obj" at A1C5 
+;Align: _CODE_SPI_SEC in "CTS_User.obj" with 0 
+;Locate: _CODE_SPI_SEC in "SACM_A1800_fptr_User.obj" at A301 
+;Align: _CODE_SPI_SEC in "SACM_A1800_fptr_User.obj" with 0 
+;Locate: _CODE_SPI_SEC in "system.obj" at A473 
+;Align: _CODE_SPI_SEC in "system.obj" with 0 
+;Locate: _CODE_SPI_SEC in "main.obj" at A63E 
+;Align: _CODE_SPI_SEC in "main.obj" with 0 
+;Locate: _RESOURCE_SPI_SEC in "tk6_a18.res" at 20000 
+;Align: _RESOURCE_SPI_SEC in "tk6_a18.res" with 0 
+;Locate: _RESOURCE_SPI_SEC in "tailor3_16K_a18.res" at 2685E 
+;Align: _RESOURCE_SPI_SEC in "tailor3_16K_a18.res" with 0 
+;Locate: _RESOURCE_SPI_SEC in "FileMerger_ROM_bin.res" at 3428B 
+;Align: _RESOURCE_SPI_SEC in "FileMerger_ROM_bin.res" with 0 
+;Locate: __sn_init_table in "<internal obj.>" of "<internal lib.>"  at 11940 
+;Align: __sn_init_table in "<internal obj.>" of "<internal lib.>"  with 0 

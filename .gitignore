@@ -1,0 +1,89 @@
+# =========================================================
+# Generalplus / GPOG2000A / GPCE36 project ignore rules
+# =========================================================
+
+# Build output folders
+Debug/
+Release/
+debug/
+release/
+Output/
+output/
+Build/
+build/
+Bin/
+bin/
+Obj/
+obj/
+
+# Compiler / assembler intermediate files
+*.o
+*.obj
+*.a
+*.d
+*.dep
+*.lst
+*.lis
+*.map
+*.sym
+*.tmp
+*.bak
+*.old
+*.orig
+*.log
+
+# Generated binary / programming output
+*.bin
+*.hdb
+*.hex
+*.s19
+*.s28
+*.s37
+*.elf
+*.out
+*.rom
+*.img
+
+# Generated audio/resource output
+*.res
+*.dat
+*.tbl
+*.idx
+
+# IDE / editor temporary files
+*.user
+*.suo
+*.ncb
+*.aps
+*.plg
+*.opt
+*.ilk
+*.pdb
+*.idb
+*.swp
+*.swo
+*.DS_Store
+Thumbs.db
+
+# Windows shortcuts / temporary files
+*.lnk
+~$*
+desktop.ini
+
+# Easy Writer / programmer logs
+EasyWriter*.log
+*.ewlog
+Programmer*.log
+Download*.log
+
+# Keep important vendor/source files
+!*.c
+!*.h
+!*.asm
+!*.inc
+!*.lib
+!*.lcf
+!*.prj
+!*.gpj
+!*.ini
+!Resource.h

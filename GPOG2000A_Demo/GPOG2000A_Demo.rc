@@ -1,0 +1,35 @@
+# Begin Project
+# Begin SubItem "GPCE3100_ROMCode  Resources"
+# Begin Group "SPI_Resources_Folder"
+#PROP Default_Filter=
+USEPARAM=FALSE
+PARAM=
+EXPORT=3
+SPECIFICFLAG=0
+# Begin Source File
+SOURCE=voice\tailor3_16K.a18
+USEPARAM=FALSE
+PARAM=
+ID=RES_TAILOR3_16K_A18
+EXPORT=3
+SPECIFICFLAG=0
+# End Source File
+# Begin Source File
+SOURCE=voice\tk6.a18
+USEPARAM=FALSE
+PARAM=
+ID=RES_TK6_A18
+EXPORT=3
+SPECIFICFLAG=0
+# End Source File
+# Begin Source File
+SOURCE=voice\FileMergerVersion1\FileMerger_ROM.bin
+USEPARAM=FALSE
+PARAM=
+ID=RES_FILEMERGER_ROM_BIN
+EXPORT=3
+SPECIFICFLAG=0
+# End Source File
+# End Group
+# End SubItem
+# End Project
