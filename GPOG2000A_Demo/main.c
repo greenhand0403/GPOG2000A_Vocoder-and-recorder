@@ -74,7 +74,7 @@
 #define C_Record_Flow_WaitPlay			0x03
 #define C_Record_Flow_Playing			0x04
 
-////block 14, addr 0xE0000;  =>>  0xe0000 /2 = 0x70000; then add+ 0x8000  = 0x78000) //��Memory window �� 0x78000 ���Կ����õ�ַ ��ֵ
+////block 14, addr 0xE0000;  =>>  0xe0000 /2 = 0x70000; then add+ 0x8000  = 0x78000) //在Memory window 里 0x78000 可以看到该地址 的值
 //#define C_REC_block          14 //29      // 16M Max31;  32M Max63; 64M  Max127    /////29 =>>  0xF0000
 
 //**************************************************************************
@@ -117,10 +117,10 @@ unsigned PreCtsResult[1];
 unsigned TriggeredPad[1];
 #endif
 
-unsigned EnvDet_AttackLevel = 0x0600;  //���������ż�ֵ
-unsigned EnvDet_AttackTime = 0x40;   //���������ż�ֵ�����ʱ��
-unsigned EnvDet_ReleaseLevel = 0x0300; //������С�ż�ֵ
-unsigned EnvDet_ReleaseTime = 0x0280;  //������С���ż�ֵ�����ʱ��
+unsigned EnvDet_AttackLevel = 0x0600;  //音量增大门槛值
+unsigned EnvDet_AttackTime = 0x40;   //音量增大到门槛值后持续时间
+unsigned EnvDet_ReleaseLevel = 0x0300; //音量减小门槛值
+unsigned EnvDet_ReleaseTime = 0x0280;  //音量减小到门槛值后持续时间
 
 unsigned PWMorCUR_Flg = 0; // 0:CUR DACOut ,1:PWM Out
 
@@ -136,7 +136,7 @@ int main()
 	
 	System_Initial();			          	// System initial
 	
-	PWMorCUR_Flg = 1;        //ѡ�� 1:PWM DACOut;  0:CUR DACOut
+	PWMorCUR_Flg = 1;        // 1:PWM DACOut;  0:CUR DACOut
 	
 	USER_Set_Audio_OUT();    //Set audio output is  CUR OUT 	
 
@@ -162,10 +162,10 @@ int main()
   	
 	CMPADC_Init();
 	EnvDet_Initial();										//Envelope initial
-	EnvDet_SetAttackLevel(EnvDet_AttackLevel);  //���������ż�ֵ
-	EnvDet_SetAttackTime(EnvDet_AttackTime);   //���������ż�ֵ�����ʱ��
-	EnvDet_SetReleaseLevel(EnvDet_ReleaseLevel); //������С�ż�ֵ
-	EnvDet_SetReleaseTime(EnvDet_ReleaseTime);  //������С���ż�ֵ�����ʱ��
+	EnvDet_SetAttackLevel(EnvDet_AttackLevel);  //音量增大门槛值
+	EnvDet_SetAttackTime(EnvDet_AttackTime);   //音量增大到门槛值后持续时间
+	EnvDet_SetReleaseLevel(EnvDet_ReleaseLevel); //音量减小门槛值
+	EnvDet_SetReleaseTime(EnvDet_ReleaseTime);  //音量减小到门槛值后持续时间
 	EnvDet_Start();
 	chk_MIC_voice_flag = 1;   ////start MIC EnvDet
 	
@@ -289,10 +289,10 @@ int main()
 				chk_MIC_voice_flag = 1;   ////start MIC EnvDet
 				CMPADC_Init();
 				EnvDet_Initial();										//Envelope initial
-				EnvDet_SetAttackLevel(EnvDet_AttackLevel);  //���������ż�ֵ
-				EnvDet_SetAttackTime(EnvDet_AttackTime);   //���������ż�ֵ�����ʱ��
-				EnvDet_SetReleaseLevel(EnvDet_ReleaseLevel); //������С�ż�ֵ
-				EnvDet_SetReleaseTime(EnvDet_ReleaseTime);  //������С���ż�ֵ�����ʱ��
+				EnvDet_SetAttackLevel(EnvDet_AttackLevel);  //音量增大门槛值
+				EnvDet_SetAttackTime(EnvDet_AttackTime);   //音量增大到门槛值后持续时间
+				EnvDet_SetReleaseLevel(EnvDet_ReleaseLevel); //音量减小门槛值
+				EnvDet_SetReleaseTime(EnvDet_ReleaseTime);  //音量减小到门槛值后持续时间
 				EnvDet_Start();
 				
 				break;
