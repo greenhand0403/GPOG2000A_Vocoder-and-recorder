@@ -250,6 +250,7 @@ int main()
 				if(chk_MIC_voice_flag == 1)
 					chk_MIC_voice_flag = 0;	   ////stop MIC EnvDet
 				*P_INT_Ctrl &= ~C_IRQ3_ADC;			// ADC interrupt off,when VC4 Play;
+
 				SACM_A1800_fptr_Initial();                 // A1800 initial
 				USER_A1800_fptr_Volume(9);
 				A1800_fptr_Event_Initial();	
@@ -259,7 +260,7 @@ int main()
 				SACM_A1800_fptr_Stop();
 				// A1800_Idx ++;
 				// if((A1800_Idx < 0) || (A1800_Idx >= 12))    ////in fileMerger rom bin  0 ~ 11 is A1800_Idx
-					A1800_Idx = 0;
+					A1800_Idx = 1;
 				USER_A1800_fptr_SetStartAddr(A1800_Idx);    // Set index address
 				SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
 				
@@ -270,7 +271,7 @@ int main()
 
 		        VC_Mode = VC4_SHIFT_PITCH_MODE; 
 		        SACM_VC4_Mode(VC_Mode, &VC4WorkRam); 
-		        // ShiftPitchIdx = -11;// 20260513测试了变调是有效的
+		        // ShiftPitchIdx = 0;// 20260513测试了变调是有效的
 		        // SACM_VC4_ShiftPitch(ShiftPitchIdx, &VC4WorkRam);  		                    
 				SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);	// manual mode playback
 				break;

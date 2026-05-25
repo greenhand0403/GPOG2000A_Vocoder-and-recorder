@@ -367,11 +367,11 @@ Locate: CMPADC_ISR_RAMCode_SEC in "ComparatorADC.obj" at 12680 linkat 800
 ;Align: _CODE_SPI_SEC in "system.obj" with 0 
 ;Locate: _CODE_SPI_SEC in "main.obj" at A63E 
 ;Align: _CODE_SPI_SEC in "main.obj" with 0 
-;Locate: _RESOURCE_SPI_SEC in "tk6_a18.res" at 20000 
-;Align: _RESOURCE_SPI_SEC in "tk6_a18.res" with 0 
-;Locate: _RESOURCE_SPI_SEC in "tailor3_16K_a18.res" at 2685E 
-;Align: _RESOURCE_SPI_SEC in "tailor3_16K_a18.res" with 0 
-;Locate: _RESOURCE_SPI_SEC in "FileMerger_ROM_bin.res" at 3428B 
+;Locate: _RESOURCE_SPI_SEC in "FileMerger_ROM_bin.res" at 20000 
 ;Align: _RESOURCE_SPI_SEC in "FileMerger_ROM_bin.res" with 0 
+;Locate: _RESOURCE_SPI_SEC in "tk6_a18.res" at 2122C 
+;Align: _RESOURCE_SPI_SEC in "tk6_a18.res" with 0 
+;Locate: _RESOURCE_SPI_SEC in "tailor3_16K_a18.res" at 27A8A 
+;Align: _RESOURCE_SPI_SEC in "tailor3_16K_a18.res" with 0 
 ;Locate: __sn_init_table in "<internal obj.>" of "<internal lib.>"  at 11940 
 ;Align: __sn_init_table in "<internal obj.>" of "<internal lib.>"  with 0 

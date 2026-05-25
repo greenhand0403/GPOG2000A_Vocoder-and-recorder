@@ -1,0 +1,46 @@
+<Project Name="FileMerger" Version="1.0.0">
+    <Setting>
+        <Body ChipSeries="GPC3" SystemClock="8000000" />
+    </Setting>
+    <UI>
+        <FileFilter Value="*.adp|*.a16|*.a16p|*.a18|*.a181|*.a20|*.a34|*.a36|*.a48|*.a64|*.pcmgpce|*.rav|*.s20|*.s32|*.s48|*.s53|*.s72|*.s80|*.s88|*.sp4|*.sp5|*.se4|*.se5|*.AM2|*.AM3|*.AM4|*.AM5|*.pcm|*.ref|*.spp|*.spa|*.drm|*.geo|*.ima|*.wav|*.mp3|*.equ|*.bin" />
+        <Recursive Value="0" />
+        <AllFileType Value="*.adp|*.a16|*.a16p|*.a18|*.a181|*.a20|*.a34|*.a36|*.a48|*.a64|*.pcmgpce|*.rav|*.s20|*.s32|*.s48|*.s53|*.s72|*.s80|*.s88|*.sp4|*.sp5|*.se4|*.se5|*.AM2|*.AM3|*.AM4|*.AM5|*.pcm|*.ref|*.spp|*.spa|*.drm|*.geo|*.ima|*.wav|*.mp3|*.equ|*.bin|*.*" />
+        <BinVersion Value="1" />
+        <SourceFolder Source="D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\voice" />
+        <BinFile Source="D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\voice\FileMergerVersion1\FileMerger_ROM.bin" />
+        <IncFile Source="D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\voice\FileMergerVersion1\FileMerger.inc" />
+        <HFile Source="D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\voice\FileMergerVersion1\FileMerger.h" />
+        <EnableUserBinFile Value="0" />
+        <UserBinFile Source="D:\zwc\app\gadget\UserData.bin" />
+        <RecordFile Source="D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\voice\FileMergerVersion1\ROM_Address.adr" />
+        <BodyFile Source="./PreLoadValueBodyMapping.ini" />
+        <ByteOrder Value="0" />
+        <Flag64Bit Value="0" />
+        <ResourceNo Value="1" />
+        <AddressOffset Value="0" />
+        <Add8BytesHead_Version1 Value="0" />
+        <Add8BytesHead_Version2 Value="0" />
+        <Add8BytesHead Value="0" />
+        <ReservedBytes Value="12" />
+        <AddressBase Value="1" />
+        <MergeAddressTable Value="1" />
+        <FillData Value="0xFF" />
+        <AddrByteBased Value="1" />
+        <BinFileSize Value="Autosize" />
+        <CheckSumAlgorithm Value="1" />
+        <GroupNameFormat Value="%N" />
+        <GroupAddrFormat Value="%N_Addr" />
+        <FileNameFormat Value="%n" />
+        <FileAddrFormat Value="%n_Addr" />
+        <OutputAddr Value="1" />
+        <OutputIndex Value="1" />
+        <Reserved32ByteHead Value=" 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00" />
+    </UI>
+    <Resource>
+        <File Name="gold.a18" Source="D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\voice\gold.a18" GroupIndex="0" />
+        <File Name="didi.a18" Source="D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\voice\didi.a18" GroupIndex="0" />
+    </Resource>
+    <EquationTable />
+    <CustomFormat />
+</Project>
