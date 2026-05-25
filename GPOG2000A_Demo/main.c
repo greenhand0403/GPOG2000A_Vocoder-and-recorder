@@ -4,7 +4,8 @@
 // Programmer : Jerry Hsu
 // Last modified date: 2023/12/13
 // Version: 
-// Note: 
+// Note: 原厂的变声器程程序demo，已验证可以， 我做了客制化音效的修改并删除了触摸按键相关
+// IO0 1 2 录音/停止/播放 IO3 4 播放/停止预置音频 IO4 5 6 环境音量事件检测 
 //==========================================================================
 //**************************************************************************
 // Header File Included Area
@@ -91,6 +92,7 @@ extern void MoveSPIDriverToRAM_2(void);
 extern unsigned DVR18_ExtMem_Low;
 extern unsigned DVR18_ExtMem_High;
 
+extern void USER_Set_Audio_OUT(void);
 //**************************************************************************
 // Global Variable Defintion Area
 //**************************************************************************
@@ -110,13 +112,6 @@ unsigned Temp;
 unsigned Key;
 unsigned Record_Flow;
 
-#ifdef FUNC_CTS_Touch_EN
-unsigned TouchKey1 = 0;
-unsigned *CtsResult;
-unsigned PreCtsResult[1];
-unsigned TriggeredPad[1];
-#endif
-
 unsigned EnvDet_AttackLevel = 0x0600;  //音量增大门槛值
 unsigned EnvDet_AttackTime = 0x40;   //音量增大到门槛值后持续时间
 unsigned EnvDet_ReleaseLevel = 0x0300; //音量减小门槛值
@@ -125,7 +120,7 @@ unsigned EnvDet_ReleaseTime = 0x0280;  //音量减小到门槛值后持续时间
 unsigned PWMorCUR_Flg = 0; // 0:CUR DACOut ,1:PWM Out
 
 unsigned R_REC_block = 29;   // 16M Max31;  32M Max63; 64M  Max127    /////29 =>>  0xF0000
-
+unsigned char EffectMode = 0;   // 0:高音 1:低音 2:机器人
 //***************************************************************************************
 // Main Function Area
 //***************************************************************************************
@@ -138,27 +133,13 @@ int main()
 	
 	PWMorCUR_Flg = 1;        // 1:PWM DACOut;  0:CUR DACOut
 	
-	USER_Set_Audio_OUT();    //Set audio output is  CUR OUT 	
-
-	
+	USER_Set_Audio_OUT();    //Set audio output is  CUR OUT
 	VC_Mode = VC4_SHIFT_PITCH_MODE;
 	ShiftPitchIdx = 11;
 	ConstPitchIdx = 0;    
   	EchoGainIdx = 4;  
   	VcVolIdx = 12;
   	Record_Flow = C_Record_Flow_WaitEnv;	
-	
-#ifdef FUNC_CTS_Touch_EN	
-	CTS_Initial();							// Initialize CTS
-	CTS_FilterSetting(0);
-	PreCtsResult[0] = 0;
-	TriggeredPad[0] = 0;
-	CTS_Scan();
-#ifdef TouchProbe_EN	
-	TP_Initial();
-	TP_Start();
-#endif
-#endif  	
   	
 	CMPADC_Init();
 	EnvDet_Initial();										//Envelope initial
@@ -169,13 +150,6 @@ int main()
 	EnvDet_Start();
 	chk_MIC_voice_flag = 1;   ////start MIC EnvDet
 	
-	// __asm("INT OFF");
-	// MoveSPIDriverToRAM_0();
-	// MoveSPIDriverToRAM_2();
-	// SPI_Flash_Block_Erase(R_REC_block);
-	// SPI_Flash_Block_Erase(R_REC_block + 1);
-	// __asm("INT FIQ,IRQ");
-	
 	while(1)
 	{
 		Key = SP_GetCh();
@@ -185,6 +159,8 @@ int main()
 				if(chk_MIC_voice_flag == 1)
 					chk_MIC_voice_flag = 0;	   ////stop MIC EnvDet
 				SACM_A1800_fptr_Stop();
+				SACM_VC4_Stop();
+				// 擦除录音数据
 				__asm("INT OFF");
 				MoveSPIDriverToRAM_0();
 				MoveSPIDriverToRAM_2();
@@ -212,42 +188,61 @@ int main()
 				USER_A1800_fptr_Volume(9);
 				A1800_fptr_Event_Initial();	
 				A1800_fptr_IO_Event_Enable();
-				VolCompressInitial();
-				SetVolCompressLevel(12);
+				// VolCompressInitial();
+				// SetVolCompressLevel(12);
 				SACM_A1800_fptr_Stop();
+
 				Block_Addr = (R_REC_block * 65536)/2;
 				Block_Addr = Block_Addr + 0x8000;
 				DVR18_ExtMem_Low = Block_Addr & 0xffff;
 				DVR18_ExtMem_High = Block_Addr >> 16;
+
 				SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
-				// SACM_VC4_Volume(65535);// 最大声
 				
 				SACM_VC4_Initial();			// VC4 initial
 				SACM_VC4_AD_FIRType(ADC_FIR_Type);
 				SACM_VC4_DA_FIRType(DAC_FIR_Type);
-				
+				SACM_VC4_Volume(65535);// 最大声
+
 				// SACM_VC4_Volume_Control(C_Volume_Control_Enable);
-				if(++VC_Mode > VC4_JetPlaneEffect) {        	
-		          VC_Mode = VC4_SHIFT_PITCH_MODE;
-		        } 
-		        SACM_VC4_Mode(VC_Mode, &VC4WorkRam); 
-				// switch(VC_Mode)
-		        // {
-		        //   case VC4_SHIFT_PITCH_MODE:
-		        //     SACM_VC4_ShiftPitch(ShiftPitchIdx, &VC4WorkRam);  
-		        //     break;
-		            
-		        //   case VC4_CONST_PITCH_MODE: 
-		        //     SACM_VC4_ConstPitch(ConstPitchIdx, &VC4WorkRam);
-		        //     break;
-		            
-		        //   case VC4_ECHO_MODE:  
-		        //     SACM_VC4_EchoGain(EchoGainIdx, &VC4WorkRam);   
-		        //     break;
-		            
-		        //   default:
-		        //     break;
-		        // }           
+
+				switch(EffectMode)
+				{
+					case 0:     // 高音调
+						VC_Mode = VC4_SHIFT_PITCH_MODE;
+						SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
+				
+						ShiftPitchIdx = 8;
+						SACM_VC4_ShiftPitch(ShiftPitchIdx, &VC4WorkRam);
+						break;
+				
+					case 1:     // 低音调
+						VC_Mode = VC4_SHIFT_PITCH_MODE;
+						SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
+				
+						ShiftPitchIdx = -8;
+						SACM_VC4_ShiftPitch(ShiftPitchIdx, &VC4WorkRam);
+						break;
+				
+					case 2:     // 机器人音调
+						VC_Mode = VC4_RobotEffect1;
+						SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
+						break;
+				
+					default:
+						EffectMode = 0;
+						break;
+				}
+				
+				EffectMode++;
+				if(EffectMode >= 3)
+				{
+					EffectMode = 0;
+				}
+
+				// SACM_VC4_Mode(VC4_SHIFT_PITCH_MODE, &VC4WorkRam); 
+				// SACM_VC4_ShiftPitch(0, &VC4WorkRam); 
+				
 				SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);	// manual mode playback
 				break;
 	
@@ -259,11 +254,11 @@ int main()
 				USER_A1800_fptr_Volume(9);
 				A1800_fptr_Event_Initial();	
 				A1800_fptr_IO_Event_Enable();
-				VolCompressInitial();
-				SetVolCompressLevel(12);
+				// VolCompressInitial();
+				// SetVolCompressLevel(12);
 				SACM_A1800_fptr_Stop();
 				// A1800_Idx ++;
-				if((A1800_Idx < 0) || (A1800_Idx >= 12))    ////in fileMerger rom bin  0 ~ 11 is A1800_Idx
+				// if((A1800_Idx < 0) || (A1800_Idx >= 12))    ////in fileMerger rom bin  0 ~ 11 is A1800_Idx
 					A1800_Idx = 0;
 				USER_A1800_fptr_SetStartAddr(A1800_Idx);    // Set index address
 				SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
@@ -271,8 +266,8 @@ int main()
 				SACM_VC4_Initial();			// VC4 initial
 				SACM_VC4_AD_FIRType(ADC_FIR_Type);
 				SACM_VC4_DA_FIRType(DAC_FIR_Type);
-				// // SACM_VC4_Volume(65535);// 最大声
-				// SACM_VC4_Volume_Control(C_Volume_Control_Enable);       	
+				SACM_VC4_Volume(65535);// 播放时使用最大声
+
 		        VC_Mode = VC4_SHIFT_PITCH_MODE; 
 		        SACM_VC4_Mode(VC_Mode, &VC4WorkRam); 
 		        // ShiftPitchIdx = -11;// 20260513测试了变调是有效的
@@ -315,8 +310,8 @@ int main()
 				VolCompressInitial();
 				SetVolCompressLevel(12);
 				SACM_A1800_fptr_Stop();
-				A1800_Idx ++;
-				if((A1800_Idx < 0) || (A1800_Idx >= 12))    ////in fileMerger rom bin  0 ~ 11 is A1800_Idx
+				// A1800_Idx ++;
+				// if((A1800_Idx < 0) || (A1800_Idx >= 12))    //in fileMerger rom bin  0 ~ 11 is A1800_Idx
 					A1800_Idx = 0;
 				USER_A1800_fptr_SetStartAddr(A1800_Idx);    // Set index address
 				SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
@@ -335,100 +330,22 @@ int main()
 			default:
 				break;
 		} // end of switch
-		
-		#ifdef FUNC_CTS_Touch_EN
- 		CTS_MainService();
- 		#endif
  		
 		SACM_VC4_ServiceLoop();
 		SACM_DVR1800_ServiceLoop();
 		System_ServiceLoop();
 		
 		EnvDet_Playloop();
-		
 	}
 	
 	return 0;
 }
 
-#ifdef FUNC_CTS_Touch_EN
-void CTS_MainService(void)
-{
-	CTS_ServiceLoop();
-	CtsResult = CTS_GetResult();
-	// Debounce
-	TriggeredPad[0] = CtsResult[0] & ~PreCtsResult[0];
-	PreCtsResult[0] = CtsResult[0];
-
-	TouchKey1 = TriggeredPad[0];	//Pad0~15
-
-	if(TouchKey1 ==0x0001)
-	{
-		if(chk_MIC_voice_flag == 1)
-			chk_MIC_voice_flag = 0;	   ////stop MIC EnvDet
-		*P_INT_Ctrl &= ~C_IRQ3_ADC;			// ADC interrupt off,when VC4 Play;
-		SACM_A1800_fptr_Initial();                 // A1800 initial
-		USER_A1800_fptr_Volume(9);
-		A1800_fptr_Event_Initial();	
-		A1800_fptr_IO_Event_Enable();
-		VolCompressInitial();
-		SetVolCompressLevel(12);
-		SACM_A1800_fptr_Stop();
-//		A1800_Idx ++;
-//		if((A1800_Idx < 0) || (A1800_Idx >= 2))    //
-			A1800_Idx = 0;
-		USER_A1800_fptr_SetStartAddr(A1800_Idx);    // Set index address
-		SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
-		
-		SACM_VC4_Initial();			// VC4 initial
-		SACM_VC4_AD_FIRType(ADC_FIR_Type);
-		SACM_VC4_DA_FIRType(DAC_FIR_Type);
-		SACM_VC4_Volume_Control(C_Volume_Control_Enable);       	
-        VC_Mode = VC4_SHIFT_PITCH_MODE; 
-        SACM_VC4_Mode(VC_Mode, &VC4WorkRam); 
-        ShiftPitchIdx = 0;
-        SACM_VC4_ShiftPitch(ShiftPitchIdx, &VC4WorkRam);  		                    
-		SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);	// manual mode playback
-	}
-	else if(TouchKey1 ==0x0002)
-	{
-		if(chk_MIC_voice_flag == 1)
-			chk_MIC_voice_flag = 0;	   ////stop MIC EnvDet
-		*P_INT_Ctrl &= ~C_IRQ3_ADC;			// ADC interrupt off,when VC4 Play;
-		SACM_A1800_fptr_Initial();                 // A1800 initial
-		USER_A1800_fptr_Volume(9);
-		A1800_fptr_Event_Initial();	
-		A1800_fptr_IO_Event_Enable();
-		VolCompressInitial();
-		SetVolCompressLevel(12);
-		SACM_A1800_fptr_Stop();
-//		A1800_Idx ++;
-//		if((A1800_Idx < 0) || (A1800_Idx >= 2))    //
-			A1800_Idx = 1;
-		USER_A1800_fptr_SetStartAddr(A1800_Idx);    // Set index address
-		SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
-		
-		SACM_VC4_Initial();			// VC4 initial
-		SACM_VC4_AD_FIRType(ADC_FIR_Type);
-		SACM_VC4_DA_FIRType(DAC_FIR_Type);
-		SACM_VC4_Volume_Control(C_Volume_Control_Enable);       	
-        VC_Mode = VC4_SHIFT_PITCH_MODE; 
-        SACM_VC4_Mode(VC_Mode, &VC4WorkRam); 
-        ShiftPitchIdx = 0;
-        SACM_VC4_ShiftPitch(ShiftPitchIdx, &VC4WorkRam);  		                    
-		SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);	// manual mode playback
-	}	
-	
-}
-#endif
-
 void EnvDet_Playloop(void)
 {
 	if(chk_MIC_voice_flag == 0)
 		return;	
-
-
-///////IO Show status	
+	// IO Show status	
 	Temp = EnvDet_CheckStatus();
 	if(Temp & C_EnvDet_AttackActive) //start record
 	{
@@ -441,7 +358,5 @@ void EnvDet_Playloop(void)
 		__asm("clrb [0x3005], 1");  //P_IOB_Buffer			0x3005
 		__asm("clrb [0x3001], 7");  //P_IOA_Buffer
 		
-	}	
-	
-	
+	}
 }
