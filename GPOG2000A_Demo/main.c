@@ -110,11 +110,16 @@ int chk_MIC_voice_flag = 0;
 unsigned Temp;
 unsigned Key;
 unsigned Record_Flow;
-
+// C_PGA_29dB
 unsigned EnvDet_AttackLevel = 0x0600;  //音量增大门槛值
-unsigned EnvDet_AttackTime = 64;   //音量增大到门槛值后持续时间
+unsigned EnvDet_AttackTime = 10;   //音量增大到门槛值后持续时间
 unsigned EnvDet_ReleaseLevel = 0x0300; //音量减小门槛值
-unsigned EnvDet_ReleaseTime = 2640;  //音量减小到门槛值后持续时间
+unsigned EnvDet_ReleaseTime = 1500;  //音量减小到门槛值后持续时间
+// C_PGA_23dB
+// unsigned EnvDet_AttackLevel = 0x0200;  //音量增大门槛值
+// unsigned EnvDet_AttackTime = 10;   //音量增大到门槛值后持续时间
+// unsigned EnvDet_ReleaseLevel = 0x0100; //音量减小门槛值
+// unsigned EnvDet_ReleaseTime = 2000;  //音量减小到门槛值后持续时间
 
 unsigned PWMorCUR_Flg = 0; // 0:CUR DACOut ,1:PWM Out
 
@@ -307,8 +312,8 @@ int main()
 				USER_A1800_fptr_Volume(9);
 				A1800_fptr_Event_Initial();	
 				A1800_fptr_IO_Event_Enable();
-				VolCompressInitial();
-				SetVolCompressLevel(12);
+				// VolCompressInitial();
+				// SetVolCompressLevel(12);
 				SACM_A1800_fptr_Stop();
 				// A1800_Idx ++;
 				// if((A1800_Idx < 0) || (A1800_Idx >= 12))    //in fileMerger rom bin  0 ~ 11 is A1800_Idx
@@ -412,6 +417,8 @@ void PlayDiSound(void)
 	USER_A1800_fptr_Volume(9);
 	A1800_fptr_Event_Initial();	
 	A1800_fptr_IO_Event_Enable();
+	// VolCompressInitial();
+	// SetVolCompressLevel(9);
 	SACM_A1800_fptr_Stop();
 	A1800_Idx = 0;
 	USER_A1800_fptr_SetStartAddr(A1800_Idx);    // Set index address
@@ -519,7 +526,8 @@ void Auto_StartPlayRecorded(void)
 
     A1800_fptr_Event_Initial();
     A1800_fptr_IO_Event_Enable();
-
+	// VolCompressInitial();
+	// SetVolCompressLevel(9);
     SACM_A1800_fptr_Stop();
 
     Block_Addr = (R_REC_block * 65536)/2;
