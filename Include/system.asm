@@ -103,7 +103,7 @@ F_System_Initial:
 	R1 = C_TimeBase_Clear;
 	[P_TimeBase_Clear] = R1;
 	
-	R1 = 0x0080;
+	R1 = 0x0000;
 	[P_IOA_Attrib] = R1;
 	[P_IOA_Dir] = R1;
 	R1 = 0x0000;
@@ -212,8 +212,8 @@ F_Key_Scan_ServiceLoop:	.proc
 	R1 = [P_IOA_Data];				// get key data from IOA   
 //	R1 = [P_IOB_Data];				// get key data from IOB
 
-	R1 &= 0x087F;					// 8Bits
-	//R1 &= 0xFFFF;					// 16Bits
+	//R1 &= 0x087F;					// 8Bits
+	R1 &= 0xFFFF;					// 16Bits
 	R2 = [R_DebounceReg];
 	[R_DebounceReg] = R1;
 	cmp R2, [R_DebounceReg];
@@ -447,7 +447,7 @@ F_USER_Set_Audio_OUT:
 	
 L_CurrentDAC?:	
 	//// Setting CUR
-	//setb [P_IOB_Buffer], 8;  //Set DAC ¹¦·ÅÊ¹ÄÜIO£¬ IOB8¿ØÖÆGPY0030 ¸ßÓÐÐ§
+	//setb [P_IOB_Buffer], 8;  //Set DAC ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½IOï¿½ï¿½ IOB8ï¿½ï¿½ï¿½ï¿½GPY0030 ï¿½ï¿½ï¿½ï¿½Ð§
 		
 	R1 = C_AUDIO_PWMIP_Enable | C_AUDIO_PWM_Enable | C_AUDIO_Gain_Sel | C_MuteControl_DATACHAGE;
 	[P_AUDIO_Ctrl1] = R1;

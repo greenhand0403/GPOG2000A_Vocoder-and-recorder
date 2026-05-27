@@ -140,6 +140,7 @@ void Auto_StartPlayRecorded(void);
 void Auto_StopWorkMode(void);
 void CMPADC_ReInit(void);
 void CMPADC_Stop(void);
+unsigned char KeyCount = 0;// 按第1次先进入工作模式，默认是高音调模式；按第2次，还是在工作模式，但是切换低音调；按第3次，还是在工作模式，但是机器人音效；按第4次还是播放一次滴声，然后退出工作模式。
 int main()
 {				
 	//add your code here	
@@ -174,7 +175,7 @@ int main()
 		Key = SP_GetCh();
 		switch(Key)
 		{	
-			case 0x0001:	// IOA0 + Vcc
+			case 0x0080:	// IOA7 + Vcc
 				if(chk_MIC_voice_flag == 1)
 					chk_MIC_voice_flag = 0;	   ////stop MIC EnvDet
 				SACM_A1800_fptr_Stop();
@@ -265,43 +266,49 @@ int main()
 				SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);	// manual mode playback
 				break;
 	
-			case 0x0008:	// IOA3 + Vcc
-				if (AutoState == AUTO_IDLE)
+			case 0x0001:	// IOA0 + Vcc
+				// ① 播放按键的滴声
+				PlayDiSound();
+				EffectMode = KeyCount;
+				switch (KeyCount)
 				{
-					Auto_PrepareRecord();
-					AutoState = AUTO_WAIT_ATTACK;
+					// ② 自动监听式变声器的工作流程
+					case 0:
+						KeyCount = 1;
+						// AutoState = AUTO_IDLE;
+						Auto_PrepareRecord();
+						AutoState = AUTO_WAIT_ATTACK;
+						break;
+					case 1:
+						KeyCount = 2;
+						// AutoState = AUTO_IDLE;
+						Auto_PrepareRecord();
+						AutoState = AUTO_WAIT_ATTACK;
+						break;
+					case 2:
+						KeyCount = 3;
+						// AutoState = AUTO_IDLE;
+						Auto_PrepareRecord();
+						AutoState = AUTO_WAIT_ATTACK;
+						break;
+					case 3:
+						PlayDiSound();
+						KeyCount = 0;
+						Auto_StopWorkMode();
+						break;
+					default:
+						break;
 				}
-				else
-				{
-					Auto_StopWorkMode();
-				}
-				// if(chk_MIC_voice_flag == 1)
-				// 	chk_MIC_voice_flag = 0;	   ////stop MIC EnvDet
-				// *P_INT_Ctrl &= ~C_IRQ3_ADC;			// ADC interrupt off,when VC4 Play;
-
-				// SACM_A1800_fptr_Initial();                 // A1800 initial
-				// USER_A1800_fptr_Volume(9);
-				// A1800_fptr_Event_Initial();	
-				// A1800_fptr_IO_Event_Enable();
-				// // VolCompressInitial();
-				// // SetVolCompressLevel(12);
-				// SACM_A1800_fptr_Stop();
-				// // A1800_Idx ++;
-				// // if((A1800_Idx < 0) || (A1800_Idx >= 12))    ////in fileMerger rom bin  0 ~ 11 is A1800_Idx
-				// 	A1800_Idx = 1;
-				// USER_A1800_fptr_SetStartAddr(A1800_Idx);    // Set index address
-				// SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
 				
-				// SACM_VC4_Initial();			// VC4 initial
-				// SACM_VC4_AD_FIRType(ADC_FIR_Type);
-				// SACM_VC4_DA_FIRType(DAC_FIR_Type);
-				// SACM_VC4_Volume(65535);// 播放时使用最大声
-
-		        // VC_Mode = VC4_SHIFT_PITCH_MODE; 
-		        // SACM_VC4_Mode(VC_Mode, &VC4WorkRam); 
-		        // // ShiftPitchIdx = 0;// 20260513测试了变调是有效的
-		        // // SACM_VC4_ShiftPitch(ShiftPitchIdx, &VC4WorkRam);  		                    
-				// SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);	// manual mode playback
+				// if (AutoState == AUTO_IDLE)
+				// {
+				// 	Auto_PrepareRecord();
+				// 	AutoState = AUTO_WAIT_ATTACK;
+				// }
+				// else
+				// {
+				// 	Auto_StopWorkMode();
+				// }
 				break;
 				
 			case 0x0010:	// IOA4 + Vcc	
@@ -364,64 +371,9 @@ int main()
 		SACM_DVR1800_ServiceLoop();
 
 		// 音量检测状态机
-		switch (AutoState)
+		// if (KeyCount < 4)
 		{
-			case AUTO_IDLE:
-				break;
-
-			case AUTO_WAIT_ATTACK:
-				if (Dbg_AttackCount != LastAttackCount)
-				{
-					LastAttackCount = Dbg_AttackCount;
-					LastReleaseCount = Dbg_ReleaseCount;
-
-					Auto_StartRecord();
-
-					AutoState = AUTO_RECORDING;
-				}
-				break;
-
-			case AUTO_RECORDING:
-				if (Dbg_ReleaseCount != LastReleaseCount)
-				{
-					LastReleaseCount = Dbg_ReleaseCount;
-
-					SACM_DVR1800_Stop();
-
-					AutoState = AUTO_WAIT_REC_END;
-				}
-				break;
-
-			case AUTO_WAIT_REC_END:
-				SACM_DVR1800_ServiceLoop();
-
-				if ((SACM_DVR1800_Status() & 0x01) == 0)
-				{
-					Auto_StartPlayRecorded();
-
-					AutoState = AUTO_PLAYING;
-				}
-				break;
-
-			case AUTO_PLAYING:
-				// SACM_VC4_ServiceLoop();
-				// 这个状态是VC4播放完毕,此时回到IDLE状态,等待下一个attack事件
-				if ((SACM_VC4_Status() & 0x01) == 0)
-				{
-					SACM_A1800_fptr_Stop();
-					SACM_VC4_Stop();
-
-					AutoState = AUTO_IDLE;
-
-					Auto_PrepareRecord();
-
-					AutoState = AUTO_WAIT_ATTACK;
-				}
-				break;
-
-			default:
-				AutoState = AUTO_IDLE;
-				break;
+			Auto_StateMachine();
 		}
 
 		System_ServiceLoop();
@@ -431,9 +383,93 @@ int main()
 	
 	return 0;
 }
-void CMPADC_ReInit(void)
+void Auto_StateMachine(void)
 {
-	
+	switch (AutoState)
+	{
+		case AUTO_IDLE:
+			break;
+
+		case AUTO_WAIT_ATTACK:
+			if (Dbg_AttackCount != LastAttackCount)
+			{
+				LastAttackCount = Dbg_AttackCount;
+				LastReleaseCount = Dbg_ReleaseCount;
+
+				Auto_StartRecord();
+
+				AutoState = AUTO_RECORDING;
+			}
+			break;
+
+		case AUTO_RECORDING:
+			if (Dbg_ReleaseCount != LastReleaseCount)
+			{
+				LastReleaseCount = Dbg_ReleaseCount;
+
+				SACM_DVR1800_Stop();
+
+				AutoState = AUTO_WAIT_REC_END;
+			}
+			break;
+
+		case AUTO_WAIT_REC_END:
+			SACM_DVR1800_ServiceLoop();
+
+			if ((SACM_DVR1800_Status() & 0x01) == 0)
+			{
+				Auto_StartPlayRecorded();
+
+				AutoState = AUTO_PLAYING;
+			}
+			break;
+
+		case AUTO_PLAYING:
+			// SACM_VC4_ServiceLoop();
+			// 这个状态是VC4播放完毕,此时回到IDLE状态,等待下一个attack事件
+			if ((SACM_VC4_Status() & 0x01) == 0)
+			{
+				Auto_PrepareRecord();
+				AutoState = AUTO_WAIT_ATTACK;
+			}
+			break;
+
+		default:
+			break;
+	}
+}
+void PlayDiSound(void)
+{
+	if(chk_MIC_voice_flag == 1)
+		chk_MIC_voice_flag = 0;	   ////stop MIC EnvDet
+	*P_INT_Ctrl &= ~C_IRQ3_ADC;			// ADC interrupt off,when VC4 Play;
+
+	SACM_A1800_fptr_Initial();                 // A1800 initial
+	USER_A1800_fptr_Volume(9);
+	A1800_fptr_Event_Initial();	
+	A1800_fptr_IO_Event_Enable();
+	SACM_A1800_fptr_Stop();
+	A1800_Idx = 1;
+	USER_A1800_fptr_SetStartAddr(A1800_Idx);    // Set index address
+	SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
+
+	SACM_VC4_Initial();			// VC4 initial
+	SACM_VC4_AD_FIRType(ADC_FIR_Type);
+	SACM_VC4_DA_FIRType(DAC_FIR_Type);
+	// SACM_VC4_Volume(65535);// 播放时使用最大声
+
+	VC_Mode = VC4_SHIFT_PITCH_MODE; 
+	SACM_VC4_Mode(VC_Mode, &VC4WorkRam); 
+	// ShiftPitchIdx = 0;// 20260513测试了变调是有效的
+	// SACM_VC4_ShiftPitch(ShiftPitchIdx, &VC4WorkRam);  		                    
+	SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);	// manual mode playback
+	// 等待滴声播放结束
+	while ((SACM_VC4_Status() & 0x01) != 0)
+	{
+		SACM_VC4_ServiceLoop();
+		SACM_DVR1800_ServiceLoop();
+		System_ServiceLoop();
+	}
 }
 void EnableEnvDet(void)
 {
@@ -478,21 +514,19 @@ void Auto_PrepareRecord(void)
     // 预初始化 DVR1800，但不开始录音
     SACM_DVR1800_Initial();
 }
+// 这个函数有问题，无法去切换自动监听模式和待机静止模式
 void Auto_StopWorkMode(void)
 {
-    AutoState = AUTO_IDLE;
+	// 停止麦克风音量检测功能
+    // CMPADC_Silence_Disable();
+    CMPADC_Stop();
+	EnvDet_Stop();
+	chk_MIC_voice_flag = 0;	   ////stop MIC EnvDet
 
+	// 停止任何播放录音的行为
     SACM_A1800_fptr_Stop();
     SACM_VC4_Stop();
     SACM_DVR1800_Stop();
-
-    // CMPADC_Silence_Disable();
-    CMPADC_Stop();
-
-    Dbg_AttackCount = 0;
-    Dbg_ReleaseCount = 0;
-    LastAttackCount = 0;
-    LastReleaseCount = 0;
 }
 void Auto_StartRecord(void)
 {
@@ -554,14 +588,7 @@ void Auto_StartPlayRecorded(void)
 			break;
 	
 		default:
-			EffectMode = 0;
 			break;
-	}
-	
-	EffectMode++;
-	if(EffectMode >= 3)
-	{
-		EffectMode = 0;
 	}
 
 	// SACM_VC4_Mode(VC4_SHIFT_PITCH_MODE, &VC4WorkRam); 
