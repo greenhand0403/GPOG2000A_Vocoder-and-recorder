@@ -71,7 +71,7 @@ F_CMPADC_Init:
 	[P_CMPADC_Ctrl1] = R1;
 	R1 = C_CMPADC_INT_Flag;
 	[P_CMPADC_Status] = R1;
-	R1 = C_PGA_Enable | C_PGAO_None | C_PGA_SH_Enable | C_PGA_29dB;
+	R1 = C_PGA_Enable | C_PGAO_None | C_PGA_SH_Enable | C_PGA_23dB;
 	[P_PGA_Ctrl] = R1;
    
    	R1 = [P_INT_Ctrl]
