@@ -38,7 +38,7 @@
         <Reserved32ByteHead Value=" 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00" />
     </UI>
     <Resource>
-        <File Name="gold.a18" Source="D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\voice\gold.a18" GroupIndex="0" />
+        <ResGroup Name="Group_Table" Type="0" />
         <File Name="didi.a18" Source="D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\voice\didi.a18" GroupIndex="0" />
     </Resource>
     <EquationTable />

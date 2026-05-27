@@ -24,9 +24,7 @@
 
 #define _GROUP_TABLE                   0       	//Group Index:0           Group Name:Group_Table     Group Type:Unknown 
 #define _GROUP_TABLE_ADDR              (SEC_START_ADDR + 0x00000c)	//Group Addr :0x00000c    Group Name:Group_Table     Group Type:Unknown 
-#define _GOLD                          0       	//File  Index:0           File  Name:gold.a18 
-#define _GOLD_ADDR                     (SEC_START_ADDR + 0x00000c)	//File  Addr :0x00000c    File  Name:gold.a18 
-#define _DIDI                          1       	//File  Index:1           File  Name:didi.a18 
-#define _DIDI_ADDR                     (SEC_START_ADDR + 0x001cd2)	//File  Addr :0x001cd2    File  Name:didi.a18 
+#define _DIDI                          0       	//File  Index:0           File  Name:didi.a18 
+#define _DIDI_ADDR                     (SEC_START_ADDR + 0x00000c)	//File  Addr :0x00000c    File  Name:didi.a18 
 
 #endif /* __FILE_MERGER_H__ */

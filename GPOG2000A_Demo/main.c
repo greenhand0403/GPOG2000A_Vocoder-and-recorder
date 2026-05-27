@@ -4,8 +4,7 @@
 // Programmer : Jerry Hsu
 // Last modified date: 2023/12/13
 // Version: 
-// Note: 原厂的变声器程程序demo，已验证可以， 我做了客制化音效的修改并删除了触摸按键相关
-// IO0 1 2 录音/停止/播放 IO3 4 播放/停止预置音频 IO4 5 6 环境音量事件检测 
+// Note: 第一版变声器demo
 //==========================================================================
 //**************************************************************************
 // Header File Included Area
@@ -113,9 +112,9 @@ unsigned Key;
 unsigned Record_Flow;
 
 unsigned EnvDet_AttackLevel = 0x0600;  //音量增大门槛值
-unsigned EnvDet_AttackTime = 0x40;   //音量增大到门槛值后持续时间
+unsigned EnvDet_AttackTime = 64;   //音量增大到门槛值后持续时间
 unsigned EnvDet_ReleaseLevel = 0x0300; //音量减小门槛值
-unsigned EnvDet_ReleaseTime = 0x0280;  //音量减小到门槛值后持续时间
+unsigned EnvDet_ReleaseTime = 2640;  //音量减小到门槛值后持续时间
 
 unsigned PWMorCUR_Flg = 0; // 0:CUR DACOut ,1:PWM Out
 
@@ -156,16 +155,7 @@ int main()
 	ConstPitchIdx = 0;    
   	EchoGainIdx = 4;  
   	VcVolIdx = 12;
-  	Record_Flow = C_Record_Flow_WaitEnv;	
-  	// 在开机时初始化麦克风检测
-	// CMPADC_Init();
-	// EnvDet_Initial();										//Envelope initial
-	// EnvDet_SetAttackLevel(EnvDet_AttackLevel);  //音量增大门槛值
-	// EnvDet_SetAttackTime(EnvDet_AttackTime);   //音量增大到门槛值后持续时间
-	// EnvDet_SetReleaseLevel(EnvDet_ReleaseLevel); //音量减小门槛值
-	// EnvDet_SetReleaseTime(EnvDet_ReleaseTime);  //音量减小到门槛值后持续时间
-	// EnvDet_Start();
-	// chk_MIC_voice_flag = 1;   ////start MIC EnvDet
+  	Record_Flow = C_Record_Flow_WaitEnv;
 	// 音量检测
 	AutoState = AUTO_IDLE;
 	LastAttackCount = 0;
@@ -175,7 +165,7 @@ int main()
 		Key = SP_GetCh();
 		switch(Key)
 		{	
-			case 0x0080:	// IOA7 + Vcc
+			case 0x0001:	// IOA0 + Vcc
 				if(chk_MIC_voice_flag == 1)
 					chk_MIC_voice_flag = 0;	   ////stop MIC EnvDet
 				SACM_A1800_fptr_Stop();
@@ -266,49 +256,23 @@ int main()
 				SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);	// manual mode playback
 				break;
 	
-			case 0x0001:	// IOA0 + Vcc
+			case 0x0080:	// IOA7 + Vcc
 				// ① 播放按键的滴声
 				PlayDiSound();
 				EffectMode = KeyCount;
-				switch (KeyCount)
+				if (KeyCount < 3)
 				{
-					// ② 自动监听式变声器的工作流程
-					case 0:
-						KeyCount = 1;
-						// AutoState = AUTO_IDLE;
-						Auto_PrepareRecord();
-						AutoState = AUTO_WAIT_ATTACK;
-						break;
-					case 1:
-						KeyCount = 2;
-						// AutoState = AUTO_IDLE;
-						Auto_PrepareRecord();
-						AutoState = AUTO_WAIT_ATTACK;
-						break;
-					case 2:
-						KeyCount = 3;
-						// AutoState = AUTO_IDLE;
-						Auto_PrepareRecord();
-						AutoState = AUTO_WAIT_ATTACK;
-						break;
-					case 3:
-						PlayDiSound();
-						KeyCount = 0;
-						Auto_StopWorkMode();
-						break;
-					default:
-						break;
+					KeyCount++;
+					AutoState = AUTO_IDLE;
+					Auto_PrepareRecord();
+					AutoState = AUTO_WAIT_ATTACK;
 				}
-				
-				// if (AutoState == AUTO_IDLE)
-				// {
-				// 	Auto_PrepareRecord();
-				// 	AutoState = AUTO_WAIT_ATTACK;
-				// }
-				// else
-				// {
-				// 	Auto_StopWorkMode();
-				// }
+				else
+				{
+					PlayDiSound();
+					KeyCount = 0;
+					Auto_StopWorkMode();
+				}
 				break;
 				
 			case 0x0010:	// IOA4 + Vcc	
@@ -371,7 +335,7 @@ int main()
 		SACM_DVR1800_ServiceLoop();
 
 		// 音量检测状态机
-		// if (KeyCount < 4)
+		if (AutoState != AUTO_IDLE)
 		{
 			Auto_StateMachine();
 		}
@@ -449,14 +413,14 @@ void PlayDiSound(void)
 	A1800_fptr_Event_Initial();	
 	A1800_fptr_IO_Event_Enable();
 	SACM_A1800_fptr_Stop();
-	A1800_Idx = 1;
+	A1800_Idx = 0;
 	USER_A1800_fptr_SetStartAddr(A1800_Idx);    // Set index address
 	SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
 
 	SACM_VC4_Initial();			// VC4 initial
 	SACM_VC4_AD_FIRType(ADC_FIR_Type);
 	SACM_VC4_DA_FIRType(DAC_FIR_Type);
-	// SACM_VC4_Volume(65535);// 播放时使用最大声
+	SACM_VC4_Volume(65535);// 播放时使用最大声
 
 	VC_Mode = VC4_SHIFT_PITCH_MODE; 
 	SACM_VC4_Mode(VC_Mode, &VC4WorkRam); 
@@ -475,10 +439,10 @@ void EnableEnvDet(void)
 {
 	CMPADC_Init();
 	EnvDet_Initial();						//Envelope initial
-	EnvDet_SetAttackLevel(0x0200);
-	EnvDet_SetAttackTime(8);
-	EnvDet_SetReleaseLevel(0x0100);
-	EnvDet_SetReleaseTime(2000);
+	EnvDet_SetAttackLevel(EnvDet_AttackLevel);
+	EnvDet_SetAttackTime(EnvDet_AttackTime);
+	EnvDet_SetReleaseLevel(EnvDet_ReleaseLevel);
+	EnvDet_SetReleaseTime(EnvDet_ReleaseTime);
 	EnvDet_Start();
 	chk_MIC_voice_flag = 1;   ////start MIC EnvDet
 
@@ -489,34 +453,42 @@ void EnableEnvDet(void)
 }
 void Auto_PrepareRecord(void)
 {
-	// ① 开启麦克风检测音量
-	EnableEnvDet();
+    // 先停止旧流程
+    chk_MIC_voice_flag = 0;
+    EnvDet_Stop();
+    CMPADC_Stop();
 
-	// ② 擦除数据，提前准备录音相关的设置 干扰了① 麦克风检查音量，导致后续无法触发attack
     SACM_A1800_fptr_Stop();
     SACM_VC4_Stop();
     SACM_DVR1800_Stop();
 
+    // 先擦除录音区
     __asm("INT OFF");
 
-	MoveSPIDriverToRAM_0();
-	MoveSPIDriverToRAM_2();
-	SPI_Flash_Block_Erase(R_REC_block);
-	SPI_Flash_Block_Erase(R_REC_block + 1);
-
-    *P_INT_Ctrl = C_IRQ0_TMA | C_IRQ3_ADC;
+    MoveSPIDriverToRAM_0();
+    MoveSPIDriverToRAM_2();
+    SPI_Flash_Block_Erase(R_REC_block);
+    SPI_Flash_Block_Erase(R_REC_block + 1);
 
     __asm("INT FIQ,IRQ");
-	
+
+    // 再初始化 DVR1800
     MoveSPIDriverToRAM_0();
     MoveSPIDriverToRAM_1();
-
-    // 预初始化 DVR1800，但不开始录音
     SACM_DVR1800_Initial();
+
+    // 最后才启动麦克风音量检测
+    EnableEnvDet();
 }
-// 这个函数有问题，无法去切换自动监听模式和待机静止模式
+
 void Auto_StopWorkMode(void)
 {
+	AutoState = AUTO_IDLE;
+	// 清掉计数，避免下次进入工作态时吃到旧 attack/release
+    Dbg_AttackCount = 0;
+    Dbg_ReleaseCount = 0;
+    LastAttackCount = 0;
+    LastReleaseCount = 0;
 	// 停止麦克风音量检测功能
     // CMPADC_Silence_Disable();
     CMPADC_Stop();
@@ -562,8 +534,6 @@ void Auto_StartPlayRecorded(void)
 	SACM_VC4_DA_FIRType(DAC_FIR_Type);
 	SACM_VC4_Volume(65535);// 最大声
 
-	// SACM_VC4_Volume_Control(C_Volume_Control_Enable);
-
 	switch(EffectMode)
 	{
 		case 0:     // 高音调
@@ -591,9 +561,6 @@ void Auto_StartPlayRecorded(void)
 			break;
 	}
 
-	// SACM_VC4_Mode(VC4_SHIFT_PITCH_MODE, &VC4WorkRam); 
-	// SACM_VC4_ShiftPitch(0, &VC4WorkRam); 
-	
 	SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);	// manual mode playback
 }
 void CMPADC_Stop(void)
