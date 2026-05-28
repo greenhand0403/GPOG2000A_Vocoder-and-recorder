@@ -4,7 +4,7 @@
 // Programmer : Jerry Hsu
 // Last modified date: 2023/12/13
 // Version: 
-// Note: 第一版变声器demo
+// Note: 第二版变声器demo
 //==========================================================================
 //**************************************************************************
 // Header File Included Area
@@ -114,12 +114,7 @@ unsigned Record_Flow;
 unsigned EnvDet_AttackLevel = 0x0600;  //音量增大门槛值
 unsigned EnvDet_AttackTime = 10;   //音量增大到门槛值后持续时间
 unsigned EnvDet_ReleaseLevel = 0x0300; //音量减小门槛值
-unsigned EnvDet_ReleaseTime = 1500;  //音量减小到门槛值后持续时间
-// C_PGA_23dB
-// unsigned EnvDet_AttackLevel = 0x0200;  //音量增大门槛值
-// unsigned EnvDet_AttackTime = 10;   //音量增大到门槛值后持续时间
-// unsigned EnvDet_ReleaseLevel = 0x0100; //音量减小门槛值
-// unsigned EnvDet_ReleaseTime = 2000;  //音量减小到门槛值后持续时间
+unsigned EnvDet_ReleaseTime = 4000;  //音量减小到门槛值后持续时间
 
 unsigned PWMorCUR_Flg = 0; // 0:CUR DACOut ,1:PWM Out
 
@@ -144,7 +139,10 @@ void Auto_StartPlayRecorded(void);
 void Auto_StopWorkMode(void);
 void CMPADC_ReInit(void);
 void CMPADC_Stop(void);
-unsigned char KeyCount = 0;// 按第1次先进入工作模式，默认是高音调模式；按第2次，还是在工作模式，但是切换低音调；按第3次，还是在工作模式，但是机器人音效；按第4次还是播放一次滴声，然后退出工作模式。
+unsigned char KeyCount = 0;// 按第1次先进入工作模式，默认是高音调模式；按第2次，还是在工作模式，但是切换低音调；按第3次，还是在工作模式，但是机器人音效；按第4次还是播放一次滴声，然后退出工作模式
+#define DI_SOUND_TIMEOUT_COUNT   60000UL
+volatile unsigned char KeyBusy = 0;
+volatile unsigned char AutoBusy = 0;
 int main()
 {				
 	//add your code here	
@@ -235,7 +233,7 @@ int main()
 						VC_Mode = VC4_SHIFT_PITCH_MODE;
 						SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
 				
-						ShiftPitchIdx = -8;
+						ShiftPitchIdx = -4;
 						SACM_VC4_ShiftPitch(ShiftPitchIdx, &VC4WorkRam);
 						break;
 				
@@ -261,10 +259,16 @@ int main()
 				SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);	// manual mode playback
 				break;
 	
-			case 0x0080:	// IOA7 + Vcc
-				// ① 播放按键的滴声
+			case 0x0080:    // IOA7 + Vcc
+				if (KeyBusy)
+					break;
+			
+				KeyBusy = 1;
+			
 				PlayDiSound();
+			
 				EffectMode = KeyCount;
+			
 				if (KeyCount < 3)
 				{
 					KeyCount++;
@@ -278,8 +282,10 @@ int main()
 					KeyCount = 0;
 					Auto_StopWorkMode();
 				}
+			
+				KeyBusy = 0;
 				break;
-				
+
 			case 0x0010:	// IOA4 + Vcc	
 				SACM_A1800_fptr_Stop();
 				SACM_VC4_Stop();
@@ -342,7 +348,10 @@ int main()
 		// 音量检测状态机
 		if (AutoState != AUTO_IDLE)
 		{
-			Auto_StateMachine();
+			if (!AutoBusy)
+			{
+				Auto_StateMachine();
+			}
 		}
 
 		System_ServiceLoop();
@@ -409,38 +418,46 @@ void Auto_StateMachine(void)
 }
 void PlayDiSound(void)
 {
-	if(chk_MIC_voice_flag == 1)
-		chk_MIC_voice_flag = 0;	   ////stop MIC EnvDet
-	*P_INT_Ctrl &= ~C_IRQ3_ADC;			// ADC interrupt off,when VC4 Play;
+    unsigned long timeout = DI_SOUND_TIMEOUT_COUNT;
 
-	SACM_A1800_fptr_Initial();                 // A1800 initial
-	USER_A1800_fptr_Volume(9);
-	A1800_fptr_Event_Initial();	
-	A1800_fptr_IO_Event_Enable();
-	// VolCompressInitial();
-	// SetVolCompressLevel(9);
-	SACM_A1800_fptr_Stop();
-	A1800_Idx = 0;
-	USER_A1800_fptr_SetStartAddr(A1800_Idx);    // Set index address
-	SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
+    if(chk_MIC_voice_flag == 1)
+        chk_MIC_voice_flag = 0;
 
-	SACM_VC4_Initial();			// VC4 initial
-	SACM_VC4_AD_FIRType(ADC_FIR_Type);
-	SACM_VC4_DA_FIRType(DAC_FIR_Type);
-	SACM_VC4_Volume(65535);// 播放时使用最大声
+    *P_INT_Ctrl &= ~C_IRQ3_ADC;
 
-	VC_Mode = VC4_SHIFT_PITCH_MODE; 
-	SACM_VC4_Mode(VC_Mode, &VC4WorkRam); 
-	// ShiftPitchIdx = 0;// 20260513测试了变调是有效的
-	// SACM_VC4_ShiftPitch(ShiftPitchIdx, &VC4WorkRam);  		                    
-	SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);	// manual mode playback
-	// 等待滴声播放结束
-	while ((SACM_VC4_Status() & 0x01) != 0)
-	{
-		SACM_VC4_ServiceLoop();
-		SACM_DVR1800_ServiceLoop();
-		System_ServiceLoop();
-	}
+    SACM_A1800_fptr_Initial();
+    USER_A1800_fptr_Volume(9);
+    A1800_fptr_Event_Initial();
+    A1800_fptr_IO_Event_Enable();
+
+    SACM_A1800_fptr_Stop();
+
+    A1800_Idx = 0;
+    USER_A1800_fptr_SetStartAddr(A1800_Idx);
+    SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
+
+    SACM_VC4_Initial();
+    SACM_VC4_AD_FIRType(ADC_FIR_Type);
+    SACM_VC4_DA_FIRType(DAC_FIR_Type);
+    SACM_VC4_Volume(65535);
+
+    VC_Mode = VC4_SHIFT_PITCH_MODE;
+    SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
+    SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);
+
+    while ((SACM_VC4_Status() & 0x01) != 0)
+    {
+        SACM_VC4_ServiceLoop();
+        SACM_DVR1800_ServiceLoop();
+        System_ServiceLoop();
+
+        if (--timeout == 0)
+        {
+            SACM_VC4_Stop();
+            SACM_A1800_fptr_Stop();
+            break;
+        }
+    }
 }
 void EnableEnvDet(void)
 {
@@ -460,6 +477,10 @@ void EnableEnvDet(void)
 }
 void Auto_PrepareRecord(void)
 {
+	if (AutoBusy)
+        return;
+
+    AutoBusy = 1;
     // 先停止旧流程
     chk_MIC_voice_flag = 0;
     EnvDet_Stop();
@@ -486,6 +507,7 @@ void Auto_PrepareRecord(void)
 
     // 最后才启动麦克风音量检测
     EnableEnvDet();
+	AutoBusy = 0;
 }
 
 void Auto_StopWorkMode(void)
@@ -556,7 +578,7 @@ void Auto_StartPlayRecorded(void)
 			VC_Mode = VC4_SHIFT_PITCH_MODE;
 			SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
 	
-			ShiftPitchIdx = -8;
+			ShiftPitchIdx = -2;
 			SACM_VC4_ShiftPitch(ShiftPitchIdx, &VC4WorkRam);
 			break;
 	
