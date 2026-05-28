@@ -143,6 +143,21 @@ unsigned char KeyCount = 0;// 按第1次先进入工作模式，默认是高音�
 #define DI_SOUND_TIMEOUT_COUNT   60000UL
 volatile unsigned char KeyBusy = 0;
 volatile unsigned char AutoBusy = 0;
+#define ADC_KEY_NONE       0
+#define ADC_KEY_HIGH_PRESS 1   // 上拉型：按下约 2.7V
+#define ADC_KEY_LOW_PRESS  2   // 下拉型：按下约 0.5V
+
+volatile unsigned Dbg_IOA7_ADC_Raw = 0;
+volatile unsigned Dbg_IOA7_ADC_Key = ADC_KEY_NONE;
+volatile unsigned Dbg_IOA7_ADC_Count = 0;
+unsigned Read_IOA7_ADC_Raw(void);
+unsigned Scan_IOA7_ADC_Key(void);
+void Handle_IOA7_ADC_Key(void);
+extern void CMPADC_IOA7Key_Init(void);
+extern unsigned R_ADCKeyRaw;
+#define IOA7_ADC_LOW_PRESS_TH      800
+#define IOA7_ADC_HIGH_PRESS_TH     1800
+unsigned Last_IOA7_ADC_Key = ADC_KEY_NONE;
 int main()
 {				
 	//add your code here	
@@ -163,6 +178,8 @@ int main()
 	AutoState = AUTO_IDLE;
 	LastAttackCount = 0;
 	LastReleaseCount = 0;
+	// 新增：开机后进入 IOA7 ADC 按键检测模式
+	CMPADC_IOA7Key_Init();
 	while(1)
 	{
 		Key = SP_GetCh();
@@ -260,30 +277,30 @@ int main()
 				break;
 	
 			case 0x0080:    // IOA7 + Vcc
-				if (KeyBusy)
-					break;
+				// if (KeyBusy)
+				// 	break;
 			
-				KeyBusy = 1;
+				// KeyBusy = 1;
 			
-				PlayDiSound();
+				// PlayDiSound();
 			
-				EffectMode = KeyCount;
+				// EffectMode = KeyCount;
 			
-				if (KeyCount < 3)
-				{
-					KeyCount++;
-					AutoState = AUTO_IDLE;
-					Auto_PrepareRecord();
-					AutoState = AUTO_WAIT_ATTACK;
-				}
-				else
-				{
-					PlayDiSound();
-					KeyCount = 0;
-					Auto_StopWorkMode();
-				}
+				// if (KeyCount < 3)
+				// {
+				// 	KeyCount++;
+				// 	AutoState = AUTO_IDLE;
+				// 	Auto_PrepareRecord();
+				// 	AutoState = AUTO_WAIT_ATTACK;
+				// }
+				// else
+				// {
+				// 	PlayDiSound();
+				// 	KeyCount = 0;
+				// 	Auto_StopWorkMode();
+				// }
 			
-				KeyBusy = 0;
+				// KeyBusy = 0;
 				break;
 
 			case 0x0010:	// IOA4 + Vcc	
@@ -341,7 +358,8 @@ int main()
 			default:
 				break;
 		} // end of switch
- 		
+ 		// 新增：IOA7 ADC 按键只在空闲态检测
+		Handle_IOA7_ADC_Key();
 		SACM_VC4_ServiceLoop();
 		SACM_DVR1800_ServiceLoop();
 
@@ -616,4 +634,59 @@ void EnvDet_Playloop(void)
 		__asm("clrb [0x3001], 7");  //P_IOA_Buffer
 		
 	}
+}
+
+unsigned Read_IOA7_ADC_Raw(void)
+{
+    return R_ADCKeyRaw;
+}
+// 下拉接法：空闲 Dbg_IOA7_ADC_Key = 0，按下 = 2
+// 上拉接法：空闲 Dbg_IOA7_ADC_Key = 0，按下 = 1
+unsigned Scan_IOA7_ADC_Key(void)
+{
+    unsigned raw = Read_IOA7_ADC_Raw();
+    unsigned key = ADC_KEY_NONE;
+
+    Dbg_IOA7_ADC_Raw = raw;
+
+    if (raw < IOA7_ADC_LOW_PRESS_TH)
+    {
+        key = ADC_KEY_LOW_PRESS;
+    }
+    else if (raw > IOA7_ADC_HIGH_PRESS_TH)
+    {
+        key = ADC_KEY_HIGH_PRESS;
+    }
+    else
+    {
+        key = ADC_KEY_NONE;
+    }
+
+    Dbg_IOA7_ADC_Key = key;
+    return key;
+}
+
+void Handle_IOA7_ADC_Key(void)
+{
+    unsigned adcKey;
+
+    // 只在空闲态检测，避免和 EnvDet / 录音 / 播放抢 CMPADC
+    if (AutoState != AUTO_IDLE)
+        return;
+
+    if (KeyBusy || AutoBusy)
+        return;
+
+    adcKey = Scan_IOA7_ADC_Key();
+
+    // 只有从 NONE -> PRESS 的瞬间触发一次
+    if ((Last_IOA7_ADC_Key == ADC_KEY_NONE) && (adcKey != ADC_KEY_NONE))
+    {
+        Dbg_IOA7_ADC_Count++;
+
+        // 这里先不要接正式业务，先只计数
+        // 后面确认稳定后，再把原 case 0x0080 的逻辑搬进来
+    }
+
+    Last_IOA7_ADC_Key = adcKey;
 }

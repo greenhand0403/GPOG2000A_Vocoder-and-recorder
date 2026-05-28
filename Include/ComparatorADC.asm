@@ -24,7 +24,8 @@
 // Variable Publication Area
 //**************************************************************************
 .public R_ADCValue
-
+.public R_ADCKeyRaw
+.public _R_ADCKeyRaw
 
 //**************************************************************************
 // Function Call Publication Area
@@ -35,7 +36,8 @@
 .public F_ISR_Service_CMPADC_ADC
 .public  _ISR_Service_CMPADC_TMR
 .public F_ISR_Service_CMPADC_TMR
-
+.public _CMPADC_IOA7Key_Init
+.public F_CMPADC_IOA7Key_Init
 //**************************************************************************
 // RAM Definition Area
 //**************************************************************************
@@ -46,7 +48,9 @@
 .var R_BackUpINTAddr
 .var R_BackUpINTBank
 .var R_Count
+.var R_ADCKeyRaw
 
+.define _R_ADCKeyRaw R_ADCKeyRaw
 //**************************************************************************
 // CODE Definition Area
 //**************************************************************************
@@ -91,7 +95,55 @@ F_CMPADC_Init:
 	FIQ ON;
 	retf;
 	.endp
+//****************************************************************
+// Function    : F_CMPADC_IOA7Key_Init
+// Description : Init CMPADC for IOA7 ADC key, raw DC voltage reading
+// Destroy     : R1
+// Parameter   : None
+// Return      : None
+//****************************************************************
+_CMPADC_IOA7Key_Init: .proc
+F_CMPADC_IOA7Key_Init:
+	IRQ OFF;
+	// CMPADC 使用 TimerA 触发采样，这里参考 EnvDet_HW_Init_ 的 TimerA 配置
+	R1 = C_Timer_Setting_16K;
+	[P_TimerA_Data] = R1;
 
+	R1 = [P_Timer_Ctrl];
+	R1 |= C_TimerA_SYSCLK;
+	[P_Timer_Ctrl] = R1;
+
+	[P_TimerA_CNTR] = R1;
+	// IOA7 = CMPADC INN4
+	// 注意：如果 C_CMPADC_INN4 名字编译不过，需要去 GPCE36_CE5.inc 查真实宏名
+	R1 = C_CMPADC_INN_IOA7 | C_CMPADC_Discharge_Enable | C_CMPADC_SH_8us | C_CMPADC_Hysteresis_Enable | C_CMPADC_IBIAS_70uA | C_CMPADC_Enable;
+	[P_CMPADC_Ctrl0] = R1;
+
+	R1 = C_CMPADC_Auto_Enable | C_CMPADC_CMPO_None | C_CMPADC_TMA | C_CMPADC_Start;
+	[P_CMPADC_Ctrl1] = R1;
+
+	R1 = C_CMPADC_INT_Flag;
+	[P_CMPADC_Status] = R1;
+
+	// IOA7 ADC 按键不需要 PGA，先关闭 PGA，避免麦克风链路影响
+	R1 = 0x0000;
+	[P_PGA_Ctrl] = R1;
+
+	R1 = [P_INT_Ctrl];
+	R1 |= C_IRQ3_ADC | C_IRQ0_TMA;
+	[P_INT_Ctrl] = R1;
+
+	R1 = [P_FIQ_Sel];
+	R1 |= C_IRQ0_TMA;
+	[P_FIQ_Sel] = R1;
+
+	// 保持原有 ISR 搬运逻辑
+	call F_Move_CMPADC_ISR_ToRAM;
+
+	IRQ ON;
+	FIQ ON;
+	retf;
+	.endp
 //****************************************************************
 // Function    : Move_SACM_PCM_ISR_ToRAM
 // Description : 
@@ -150,6 +202,7 @@ F_ISR_Service_CMPADC_ADC:
 ?L_AutoMode:
 
 	R4 = [P_CMPADC_Data];	
+	[R_ADCKeyRaw] = R4;        // 新增：保存 CMPADC 原始值，给 IOA7 ADC 按键使用
 	R4 = R4 lsl 4;
 		
 	//DC = 15/16 * DC + 1/16 * Data		//alpha = 0.93
