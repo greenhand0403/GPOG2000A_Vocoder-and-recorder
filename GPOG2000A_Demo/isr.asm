@@ -63,8 +63,9 @@
 //**************************************************************************
 // External Variable Declaration
 //**************************************************************************
-
-
+.external _g_2kTicks
+.external _g_tmaDiv
+.external _g_tma64Ticks
 //**************************************************************************
 // External Function Declaration
 //**************************************************************************
@@ -108,12 +109,30 @@ L_FIQ_TimerA:
     //------------------------------------------------------------------
     // hook Timer A FIQ subroutine here and define it to be external
     // and returns as a flag to tell required process data or not   
+// Derive a low-rate tick from TimerA FIQ.
+// TimerA is active during DVR1800 recording.
+    R1 = [_g_tmaDiv];
+    R1 += 1;
+    [_g_tmaDiv] = R1;
+
+    cmp R1, 256;
+    jne ?L_TMA_Tick_Done;
+
+    R1 = 0;
+    [_g_tmaDiv] = R1;
+
+    R1 = [_g_tma64Ticks];
+    R1 += 1;
+    [_g_tma64Ticks] = R1;
+
+?L_TMA_Tick_Done:
+
 	call F_ISR_Service_SACM_DVR1800
 	
 	call F_ISR_Service_SACM_VC4
 	
 	call F_EnvDet_ISR_Service
-	
+
 	R2 = C_IRQ0_TMA;
 	[P_INT_Status] = R2;
 	pop R1, R5 from [SP]
@@ -244,13 +263,15 @@ _IRQ6:
 
 ?L_IRQ6_2048Hz:
 
-    /////////
+    R1 = [_g_2kTicks];
+    R1 += 1;
+    [_g_2kTicks] = R1;
 
     R1 = C_IRQ6_2048Hz;
     [P_INT2_Status] = R1;	
 	pop R1, R5 from [SP]
 	reti;
-		
+	
 L_IRQ_CTSTMA:
     //------------------------------------------------------------------
     // hook CTSTMA FIQ subroutine here and define it to be external

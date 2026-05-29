@@ -171,19 +171,35 @@ void Do_IOA7_LowPress_RecorderAction(void);
 // 用于调试
 volatile unsigned Dbg_StartRecord10sCount = 0;
 volatile unsigned Dbg_StopRecordAndPlayCount = 0;
+volatile unsigned g_2kTicks = 0;
+void Timebase_2048Hz_Init(void);
+void Wait_2048Hz_Ticks(unsigned ticks);
+#define REC_10S_TICKS  4096//20480
+unsigned keydown_rec = 0;
 
+volatile unsigned g_tmaDiv = 0;
+volatile unsigned g_tma64Ticks = 0;
+
+#define REC_10S_TMA64_TICKS  625
+
+void Wait_TMA64_Ticks(unsigned ticks);
+volatile unsigned Dbg_BeforeWait = 0;
+volatile unsigned Dbg_AfterWait = 0;
+volatile unsigned Dbg_TmaBefore = 0;
+volatile unsigned Dbg_TmaAfter = 0;
+volatile unsigned Dbg_DvrStatusAfterRec = 0;
 int main()
 {				
 	//add your code here	
 	Key = 0;
 	
 	System_Initial();			          	// System initial
-	
+	Timebase_2048Hz_Init();
 	PWMorCUR_Flg = 1;        // 1:PWM DACOut;  0:CUR DACOut
 	
 	USER_Set_Audio_OUT();    //Set audio output is  CUR OUT
 	VC_Mode = VC4_SHIFT_PITCH_MODE;
-	ShiftPitchIdx = 11;
+	ShiftPitchIdx = 0;
 	ConstPitchIdx = 0;    
   	EchoGainIdx = 4;  
   	VcVolIdx = 12;
@@ -318,6 +334,7 @@ int main()
 				break;
 
 			case 0x0010:	// IOA4 + Vcc	
+				// 停止播放	
 				SACM_A1800_fptr_Stop();
 				SACM_VC4_Stop();
 				break;
@@ -377,15 +394,34 @@ int main()
 		SACM_VC4_ServiceLoop();
 		SACM_DVR1800_ServiceLoop();
 		
-		// 音量检测状态机
-		if (AutoState != AUTO_IDLE)
-		{
-			if (!AutoBusy)
-			{
-				Auto_StateMachine();
-			}
-		}
+		// 上拉按键模式 音量检测状态机
+		// if (AutoState != AUTO_IDLE)
+		// {
+		// 	if (!AutoBusy)
+		// 	{
+		// 		Auto_StateMachine();
+		// 	}
+		// }
+		// 下拉按键模式 简单录音并播放的状态机
+		// if(keydown_rec == 1)
+		// {
+		// 	Wait_TMA64_Ticks(64);   // 约 1 秒，先测试能不能退出
+		// 	keydown_rec = 0;
 
+		// 	// PlayDiSound();
+			
+		// 	SimpleRecorder_StopRecordAndPlay();
+
+		// 	while ((SACM_VC4_Status() & 0x01) != 0)
+		// 	{
+		// 		SACM_VC4_ServiceLoop();
+		// 		SACM_DVR1800_ServiceLoop();
+		// 		System_ServiceLoop();
+		// 	}
+
+		// 	CMPADC_IOA7Key_Init();
+		// 	Last_IOA7_ADC_Key = ADC_KEY_NONE;
+		// }
 		System_ServiceLoop();
 		
 		EnvDet_Playloop();
@@ -600,29 +636,20 @@ void Auto_StartPlayRecorded(void)
 	{
 		case 0:     // 高音调
 			VC_Mode = VC4_SHIFT_PITCH_MODE;
-			SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
-	
 			ShiftPitchIdx = 8;
-			SACM_VC4_ShiftPitch(ShiftPitchIdx, &VC4WorkRam);
 			break;
-	
 		case 1:     // 低音调
 			VC_Mode = VC4_SHIFT_PITCH_MODE;
-			SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
-	
 			ShiftPitchIdx = -2;
-			SACM_VC4_ShiftPitch(ShiftPitchIdx, &VC4WorkRam);
 			break;
-	
 		case 2:     // 机器人音调
 			VC_Mode = VC4_RobotEffect1;
-			SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
 			break;
-	
-		default:
+		default:	// 不变调
 			break;
 	}
-
+	SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
+	SACM_VC4_ShiftPitch(ShiftPitchIdx, &VC4WorkRam);
 	SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);	// manual mode playback
 }
 void CMPADC_Stop(void)
@@ -711,16 +738,65 @@ void Do_IOA7_LowPress_RecorderAction(void)
         return;
 
     KeyBusy = 1;
-
-    SimpleRecorder_Record10sAndPlay();
 	
+    PlayDiSound();
+	
+    if (keydown_rec == 0)
+    {
+		// 先停止旧流程
+		chk_MIC_voice_flag = 0;
+		EnvDet_Stop();
+		CMPADC_Stop();
+
+		// 如果正在播音就先关掉
+		SACM_A1800_fptr_Stop();
+		SACM_VC4_Stop();
+		SACM_DVR1800_Stop();
+		// 先擦除录音区
+		__asm("INT OFF");
+		MoveSPIDriverToRAM_0();
+		MoveSPIDriverToRAM_2();
+		SPI_Flash_Block_Erase(R_REC_block);
+		SPI_Flash_Block_Erase(R_REC_block + 1);// 开始录音这个ADC比较器必须打开
+		CMPADC_Init();
+		/* 关键：显式打开 TimerA FIQ 和 ADC IRQ */
+		*P_INT_Ctrl = C_IRQ0_TMA | C_IRQ3_ADC;
+
+		__asm("INT FIQ,IRQ");
+
+		// 再初始化 DVR1800
+		MoveSPIDriverToRAM_0();
+		MoveSPIDriverToRAM_1();
+		SACM_DVR1800_Initial();
+		// 一旦这里两句话开启录音，就无法执行到后续的代码
+		USER_DVR1800_SetStartAddr(0x4, R_REC_block);			// skip 4 Bytes for length header
+		SACM_DVR1800_Rec(RecMonitorOff, Mic, DVR1800_BIT_RATE_16K);
+		
+		Dbg_DvrStatusAfterRec = SACM_DVR1800_Status();
+		Dbg_BeforeWait = 1;
+		Dbg_TmaBefore = g_tma64Ticks;
+
+		Wait_TMA64_Ticks(128);
+
+		Dbg_AfterWait = 1;
+		Dbg_TmaAfter = g_tma64Ticks;
+
+		// PlayDiSound();
+		SACM_DVR1800_Stop();
+
+		SACM_DVR1800_ServiceLoop();
+		if ((SACM_DVR1800_Status() & 0x01) == 0)
+		{
+			Auto_StartPlayRecorded();
+		}
+
+		keydown_rec = 10;
+    }
+
     KeyBusy = 0;
 }
 void SimpleRecorder_Record10sAndPlay(void)
 {
-    unsigned sec;
-    unsigned i;
-
     // 先停止旧播放/旧录音
     SimpleRecorder_StopAll();
 
@@ -745,15 +821,8 @@ void SimpleRecorder_Record10sAndPlay(void)
     USER_DVR1800_SetStartAddr(0x4, R_REC_block);
     SACM_DVR1800_Rec(RecMonitorOff, Mic, DVR1800_BIT_RATE_16K);
 
-    // 阻塞录音一段时间
-    for (sec = 0; sec < SIMPLE_REC_SECONDS; sec++)
-    {
-        for (i = 0; i < SIMPLE_REC_1S_LOOP_COUNT; i++)
-        {
-            SACM_DVR1800_ServiceLoop();
-            System_ServiceLoop();
-        }
-    }
+    // 真正按 2048Hz tick 等待 10 秒
+    Wait_2048Hz_Ticks(REC_10S_TICKS);
 
     // 停止录音并启动播放
     SimpleRecorder_StopRecordAndPlay();
@@ -766,7 +835,7 @@ void SimpleRecorder_Record10sAndPlay(void)
         System_ServiceLoop();
     }
 
-    // 播放真正结束后，才恢复 IOA7 ADC 按键 .asm
+    // 播放真正结束后，才恢复 IOA7 ADC 按键
     CMPADC_IOA7Key_Init();
     Last_IOA7_ADC_Key = ADC_KEY_NONE;
 }
@@ -804,27 +873,45 @@ void SimpleRecorder_StartRecord(void)
 }
 void SimpleRecorder_StopRecordAndPlay(void)
 {
-	// unsigned timeout;
+    unsigned timeout;
 
-    // timeout = 60000;
+    timeout = 4096;
 
     Dbg_StopRecordAndPlayCount++;
 
-    SACM_DVR1800_Stop();
+	SACM_DVR1800_Stop();
 
-    // while ((SACM_DVR1800_Status() & 0x01) != 0)
-    // {
-    //     SACM_DVR1800_ServiceLoop();
-    //     System_ServiceLoop();
+	/* 第一阶段：不管 Status，强制跑一段 DVR1800 ServiceLoop，
+	让库有机会进入 EndRecord、写长度头 */
+	g_2kTicks = 0;
+	while (g_2kTicks < 512)     // 约 250ms
+	{
+		SACM_DVR1800_ServiceLoop();
+		System_ServiceLoop();
+	}
 
-    //     if (--timeout == 0)
-    //     {
-    //         SACM_DVR1800_Stop();
-    //         break;
-    //     }
-    // }
+	/* 第二阶段：如果状态仍忙，再等待它真正空闲 */
+	g_2kTicks = 0;
+	while ((SACM_DVR1800_Status() & 0x01) != 0)
+	{
+		SACM_DVR1800_ServiceLoop();
+		System_ServiceLoop();
 
-    CMPADC_Stop();
+		if (g_2kTicks >= timeout)
+		{
+			break;
+		}
+	}
+
+	/* 第三阶段：再补跑一小段，给 Flash 长度头写入余量 */
+	g_2kTicks = 0;
+	while (g_2kTicks < 256)     // 约 125ms
+	{
+		SACM_DVR1800_ServiceLoop();
+		System_ServiceLoop();
+	}
+
+	CMPADC_Stop();
 
     // 播放录音数据
     SACM_A1800_fptr_Initial();
@@ -834,8 +921,9 @@ void SimpleRecorder_StopRecordAndPlay(void)
     A1800_fptr_IO_Event_Enable();
 
     SACM_A1800_fptr_Stop();
+	SACM_VC4_Stop();
 
-    Block_Addr = (R_REC_block * 65536) / 2;
+	Block_Addr = (R_REC_block * 65536) / 2;
     Block_Addr = Block_Addr + 0x8000;
     DVR18_ExtMem_Low = Block_Addr & 0xffff;
     DVR18_ExtMem_High = Block_Addr >> 16;
@@ -847,19 +935,12 @@ void SimpleRecorder_StopRecordAndPlay(void)
     SACM_VC4_DA_FIRType(DAC_FIR_Type);
     SACM_VC4_Volume(65535);
 
-    // 普通录音机：建议先不变声，ShiftPitch = 0
     VC_Mode = VC4_SHIFT_PITCH_MODE;
     SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
     ShiftPitchIdx = 0;
     SACM_VC4_ShiftPitch(ShiftPitchIdx, &VC4WorkRam);
 
     SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);
-
-	// 播放期间不需要麦克风 ADC，恢复 IOA7 ADC 按键检测
-	// CMPADC_IOA7Key_Init();
-
-	// 清掉边沿状态，避免下一次按键无法触发
-	// Last_IOA7_ADC_Key = ADC_KEY_NONE;
 }
 // 用于下拉模式时的简单录音机停止播放
 void SimpleRecorder_StopAll(void)
@@ -873,4 +954,39 @@ void SimpleRecorder_StopAll(void)
     SACM_VC4_Stop();
 
     SACM_DVR1800_Stop();
+}
+void Timebase_2048Hz_Init(void)
+{
+    unsigned temp;
+
+    __asm("IRQ OFF");
+
+    *P_INT2_Status = C_IRQ6_2048Hz;
+
+    temp = *P_INT2_Ctrl;
+    temp |= C_IRQ6_2048Hz;
+    *P_INT2_Ctrl = temp;
+
+    __asm("IRQ ON");
+}
+void Wait_2048Hz_Ticks(unsigned ticks)
+{
+    g_2kTicks = 0;
+
+    while (g_2kTicks < ticks)
+    {
+		SACM_VC4_ServiceLoop();
+        SACM_DVR1800_ServiceLoop();
+        System_ServiceLoop();
+    }
+}
+void Wait_TMA64_Ticks(unsigned ticks)
+{
+    g_tma64Ticks = 0;
+
+    while (g_tma64Ticks < ticks)
+    {
+        SACM_DVR1800_ServiceLoop();
+        System_ServiceLoop();
+    }
 }
