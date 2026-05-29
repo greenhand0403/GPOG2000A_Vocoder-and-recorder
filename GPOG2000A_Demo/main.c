@@ -137,19 +137,19 @@ void Auto_PrepareRecord(void);
 void Auto_StartRecord(void);
 void Auto_StartPlayRecorded(void);
 void Auto_StopWorkMode(void);
-void CMPADC_ReInit(void);
 void CMPADC_Stop(void);
 unsigned char KeyCount = 0;// 按第1次先进入工作模式，默认是高音调模式；按第2次，还是在工作模式，但是切换低音调；按第3次，还是在工作模式，但是机器人音效；按第4次还是播放一次滴声，然后退出工作模式
 #define DI_SOUND_TIMEOUT_COUNT   60000UL
 volatile unsigned char KeyBusy = 0;
 volatile unsigned char AutoBusy = 0;
+// IOA7 ADC 按键状态定义
 #define ADC_KEY_NONE       0
 #define ADC_KEY_HIGH_PRESS 1   // 上拉型：按下约 2.7V
 #define ADC_KEY_LOW_PRESS  2   // 下拉型：按下约 0.5V
 
 volatile unsigned Dbg_IOA7_ADC_Raw = 0;
 volatile unsigned Dbg_IOA7_ADC_Key = ADC_KEY_NONE;
-volatile unsigned Dbg_IOA7_ADC_Count = 0;
+
 unsigned Read_IOA7_ADC_Raw(void);
 unsigned Scan_IOA7_ADC_Key(void);
 void Handle_IOA7_ADC_Key(void);
@@ -158,26 +158,20 @@ extern unsigned R_ADCKeyRaw;
 #define IOA7_ADC_LOW_PRESS_TH      800
 #define IOA7_ADC_HIGH_PRESS_TH     1800
 unsigned Last_IOA7_ADC_Key = ADC_KEY_NONE;
-#define SIMPLE_REC_IDLE      0
-#define SIMPLE_REC_RECORDING 1
-#define SIMPLE_REC_PLAYING   2
 
-unsigned SimpleRecState = SIMPLE_REC_IDLE;
-#define SIMPLE_REC_10S_LOOP_COUNT  10000
-unsigned SimpleRecTimeout = 0;
+#define SIMPLE_REC_SECONDS        30
+#define SIMPLE_REC_1S_LOOP_COUNT  60000
+#define SIMPLE_REC_10S_LOOP_COUNT  60000
 
-void SimpleRecorder_StartRecord10s(void);
-void SimpleRecorder_ServiceLoop(void);
+void SimpleRecorder_Record10sAndPlay(void);
 void SimpleRecorder_StartRecord(void);
 void SimpleRecorder_StopRecordAndPlay(void);
 void SimpleRecorder_StopAll(void);
 void Do_IOA7_LowPress_RecorderAction(void);
-volatile unsigned Dbg_SimpleRecState = 0;
-volatile unsigned Dbg_SimpleRecTimeout = 0;
-volatile unsigned Dbg_SimpleRecAutoStopCount = 0;
-volatile unsigned Dbg_LowPressActionCount = 0;
+// 用于调试
 volatile unsigned Dbg_StartRecord10sCount = 0;
 volatile unsigned Dbg_StopRecordAndPlayCount = 0;
+
 int main()
 {				
 	//add your code here	
@@ -198,7 +192,7 @@ int main()
 	AutoState = AUTO_IDLE;
 	LastAttackCount = 0;
 	LastReleaseCount = 0;
-	// 新增：开机后进入 IOA7 ADC 按键检测模式
+	// 开机后进入 IOA7 ADC 按键检测模式
 	CMPADC_IOA7Key_Init();
 	while(1)
 	{
@@ -382,8 +376,7 @@ int main()
 		Handle_IOA7_ADC_Key();
 		SACM_VC4_ServiceLoop();
 		SACM_DVR1800_ServiceLoop();
-		// 下拉按键时的简单录音机
-		SimpleRecorder_ServiceLoop();
+		
 		// 音量检测状态机
 		if (AutoState != AUTO_IDLE)
 		{
@@ -695,10 +688,6 @@ void Handle_IOA7_ADC_Key(void)
     if (AutoState != AUTO_IDLE)
         return;
 
-	// 简单录音机正在录音时，CMPADC 已经给麦克风使用，不能再当 IOA7 ADC 读
-	if (SimpleRecState == SIMPLE_REC_RECORDING)
-		return;
-
     if (KeyBusy || AutoBusy)
         return;
 
@@ -706,8 +695,6 @@ void Handle_IOA7_ADC_Key(void)
 
     if ((Last_IOA7_ADC_Key == ADC_KEY_NONE) && (adcKey != ADC_KEY_NONE))
     {
-        Dbg_IOA7_ADC_Count++;
-
         if (adcKey == ADC_KEY_LOW_PRESS)
         {
             Do_IOA7_LowPress_RecorderAction();
@@ -723,17 +710,65 @@ void Do_IOA7_LowPress_RecorderAction(void)
     if (KeyBusy || AutoBusy)
         return;
 
-    // 录音期间不响应 IOA7 ADC 按键，避免抢 CMPADC
-    if (SimpleRecState == SIMPLE_REC_RECORDING)
-        return;
-	// 按键记录用于调试
-	Dbg_LowPressActionCount++;
     KeyBusy = 1;
 
-    // 空闲或播放中按下：停止当前播放，擦除旧录音，开始新的 10 秒录音
-    SimpleRecorder_StartRecord10s();
-
+    SimpleRecorder_Record10sAndPlay();
+	
     KeyBusy = 0;
+}
+void SimpleRecorder_Record10sAndPlay(void)
+{
+    unsigned sec;
+    unsigned i;
+
+    // 先停止旧播放/旧录音
+    SimpleRecorder_StopAll();
+
+    // 擦除录音数据
+    __asm("INT OFF");
+
+    MoveSPIDriverToRAM_0();
+    MoveSPIDriverToRAM_2();
+    SPI_Flash_Block_Erase(R_REC_block);
+    SPI_Flash_Block_Erase(R_REC_block + 1);
+
+    // 切到麦克风 CMPADC
+    CMPADC_Init();
+    *P_INT_Ctrl = C_IRQ0_TMA | C_IRQ3_ADC;
+
+    __asm("INT FIQ,IRQ");
+
+    MoveSPIDriverToRAM_0();
+    MoveSPIDriverToRAM_1();
+
+    SACM_DVR1800_Initial();
+    USER_DVR1800_SetStartAddr(0x4, R_REC_block);
+    SACM_DVR1800_Rec(RecMonitorOff, Mic, DVR1800_BIT_RATE_16K);
+
+    // 阻塞录音一段时间
+    for (sec = 0; sec < SIMPLE_REC_SECONDS; sec++)
+    {
+        for (i = 0; i < SIMPLE_REC_1S_LOOP_COUNT; i++)
+        {
+            SACM_DVR1800_ServiceLoop();
+            System_ServiceLoop();
+        }
+    }
+
+    // 停止录音并启动播放
+    SimpleRecorder_StopRecordAndPlay();
+
+    // 等待播放结束。播放期间不要恢复 IOA7 ADC
+    while ((SACM_VC4_Status() & 0x01) != 0)
+    {
+        SACM_VC4_ServiceLoop();
+        SACM_DVR1800_ServiceLoop();
+        System_ServiceLoop();
+    }
+
+    // 播放真正结束后，才恢复 IOA7 ADC 按键 .asm
+    CMPADC_IOA7Key_Init();
+    Last_IOA7_ADC_Key = ADC_KEY_NONE;
 }
 void SimpleRecorder_StartRecord10s(void)
 {
@@ -741,8 +776,6 @@ void SimpleRecorder_StartRecord10s(void)
 
     SimpleRecorder_StartRecord();
 
-    // 开始固定 10 秒录音倒计时
-    SimpleRecTimeout = SIMPLE_REC_10S_LOOP_COUNT;
 }
 void SimpleRecorder_StartRecord(void)
 {
@@ -768,31 +801,28 @@ void SimpleRecorder_StartRecord(void)
     SACM_DVR1800_Initial();
     USER_DVR1800_SetStartAddr(0x4, R_REC_block);    // skip 4 Bytes for length header
     SACM_DVR1800_Rec(RecMonitorOff, Mic, DVR1800_BIT_RATE_16K);
-
-    SimpleRecState = SIMPLE_REC_RECORDING;
 }
 void SimpleRecorder_StopRecordAndPlay(void)
 {
-	unsigned timeout;
+	// unsigned timeout;
 
-    timeout = 60000;
+    // timeout = 60000;
 
     Dbg_StopRecordAndPlayCount++;
-    SimpleRecTimeout = 0;
 
     SACM_DVR1800_Stop();
 
-    while ((SACM_DVR1800_Status() & 0x01) != 0)
-    {
-        SACM_DVR1800_ServiceLoop();
-        System_ServiceLoop();
+    // while ((SACM_DVR1800_Status() & 0x01) != 0)
+    // {
+    //     SACM_DVR1800_ServiceLoop();
+    //     System_ServiceLoop();
 
-        if (--timeout == 0)
-        {
-            SACM_DVR1800_Stop();
-            break;
-        }
-    }
+    //     if (--timeout == 0)
+    //     {
+    //         SACM_DVR1800_Stop();
+    //         break;
+    //     }
+    // }
 
     CMPADC_Stop();
 
@@ -825,43 +855,22 @@ void SimpleRecorder_StopRecordAndPlay(void)
 
     SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);
 
-	SimpleRecState = SIMPLE_REC_PLAYING;
-
 	// 播放期间不需要麦克风 ADC，恢复 IOA7 ADC 按键检测
-	CMPADC_IOA7Key_Init();
+	// CMPADC_IOA7Key_Init();
 
 	// 清掉边沿状态，避免下一次按键无法触发
-	Last_IOA7_ADC_Key = ADC_KEY_NONE;
+	// Last_IOA7_ADC_Key = ADC_KEY_NONE;
 }
 // 用于下拉模式时的简单录音机停止播放
 void SimpleRecorder_StopAll(void)
 {
     chk_MIC_voice_flag = 0;
 
-    SimpleRecTimeout = 0;
-
     CMPADC_Stop();
     EnvDet_Stop();
 
     SACM_A1800_fptr_Stop();
     SACM_VC4_Stop();
+
     SACM_DVR1800_Stop();
-}
-void SimpleRecorder_ServiceLoop(void)
-{
-    Dbg_SimpleRecState = SimpleRecState;
-    Dbg_SimpleRecTimeout = SimpleRecTimeout;
-
-    if (SimpleRecState != SIMPLE_REC_RECORDING)
-        return;
-
-    if (SimpleRecTimeout > 0)
-    {
-        SimpleRecTimeout--;
-        return;
-    }
-
-    Dbg_SimpleRecAutoStopCount++;
-
-    SimpleRecorder_StopRecordAndPlay();
 }
