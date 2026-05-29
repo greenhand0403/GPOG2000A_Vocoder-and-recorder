@@ -213,8 +213,8 @@ F_Key_Scan_ServiceLoop:	.proc
 //	R1 = [P_IOB_Data];				// get key data from IOB
 
 	//R1 &= 0x087F;					// 8Bits
-	//R1 &= 0xFFFF;					// 16Bits
-	R1 &= 0xFF7F; // 屏蔽 IOA7，IOA7 后面改用 ADC 判断，不再进入 SP_GetCh()
+	R1 &= 0xFFFF;					// 16Bits
+	//R1 &= 0xFF7F; // 屏蔽 IOA7，IOA7 后面改用 ADC 判断，不再进入 SP_GetCh()
 	R2 = [R_DebounceReg];
 	[R_DebounceReg] = R1;
 	cmp R2, [R_DebounceReg];

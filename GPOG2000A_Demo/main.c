@@ -94,11 +94,12 @@ unsigned long Block_Addr = 0;
 int chk_MIC_voice_flag = 0;
 unsigned Temp;
 unsigned Key;
+
 // C_PGA_29dB
 unsigned EnvDet_AttackLevel = 0x0600;  //音量增大门槛值
 unsigned EnvDet_AttackTime = 10;   //音量增大到门槛值后持续时间
 unsigned EnvDet_ReleaseLevel = 0x0300; //音量减小门槛值
-unsigned EnvDet_ReleaseTime = 4000;  //音量减小到门槛值后持续时间
+unsigned EnvDet_ReleaseTime = 3000;  //音量减小到门槛值后持续时间
 
 unsigned PWMorCUR_Flg = 0; // 0:CUR DACOut ,1:PWM Out
 
@@ -169,158 +170,22 @@ int main()
 	AutoState = AUTO_IDLE;
 	LastAttackCount = 0;
 	LastReleaseCount = 0;
-	// 开机后进入 IOA7 ADC 按键检测模式
-	CMPADC_IOA7Key_Init();
+	// ① 开机后进入 IOA7 ADC 按键检测模式
+	// CMPADC_IOA7Key_Init();
+	// ② 开机进入上拉按键模式
+	keydown_rec = 10;
 	while(1)
 	{
-		Key = SP_GetCh();
-		switch(Key)
-		{	
-			case 0x0001:	// IOA0 + Vcc
-				if(chk_MIC_voice_flag == 1)
-					chk_MIC_voice_flag = 0;	   ////stop MIC EnvDet
-				SACM_A1800_fptr_Stop();
-				SACM_VC4_Stop();
-				// 擦除录音数据
-				__asm("INT OFF");
-				MoveSPIDriverToRAM_0();
-				MoveSPIDriverToRAM_2();
-				SPI_Flash_Block_Erase(R_REC_block);
-				SPI_Flash_Block_Erase(R_REC_block + 1);
-				CMPADC_Init();
-				*P_INT_Ctrl = C_IRQ0_TMA | C_IRQ3_ADC;			//Allow TMA, ADC interrupt only.
-				__asm("INT FIQ,IRQ");
-				
-				MoveSPIDriverToRAM_0();
-				MoveSPIDriverToRAM_1();
-				SACM_DVR1800_Initial();
-				USER_DVR1800_SetStartAddr(0x4, R_REC_block);			// skip 4 Bytes for length header
-				SACM_DVR1800_Rec(RecMonitorOff, Mic, DVR1800_BIT_RATE_16K);
-				break;
-			
-			case 0x0002:	// IOA1 + Vcc
-				SACM_DVR1800_Stop();
-				break;
-	
-			case 0x0004:	// IOA2 + Vcc
-				if(chk_MIC_voice_flag == 1)
-					chk_MIC_voice_flag = 0;	   ////stop MIC EnvDet
-				SACM_A1800_fptr_Initial();                 // A1800 initial
-				USER_A1800_fptr_Volume(9);
-				A1800_fptr_Event_Initial();	
-				A1800_fptr_IO_Event_Enable();
-				// VolCompressInitial();
-				// SetVolCompressLevel(12);
-				SACM_A1800_fptr_Stop();
-
-				Block_Addr = (R_REC_block * 65536)/2;
-				Block_Addr = Block_Addr + 0x8000;
-				DVR18_ExtMem_Low = Block_Addr & 0xffff;
-				DVR18_ExtMem_High = Block_Addr >> 16;
-
-				SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
-				
-				SACM_VC4_Initial();			// VC4 initial
-				SACM_VC4_AD_FIRType(ADC_FIR_Type);
-				SACM_VC4_DA_FIRType(DAC_FIR_Type);
-				SACM_VC4_Volume(65535);// 最大声
-
-				// SACM_VC4_Volume_Control(C_Volume_Control_Enable);
-
-				switch(EffectMode)
-				{
-					case 0:     // 高音调
-						VC_Mode = VC4_SHIFT_PITCH_MODE;
-						SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
-				
-						ShiftPitchIdx = 8;
-						SACM_VC4_ShiftPitch(ShiftPitchIdx, &VC4WorkRam);
-						break;
-				
-					case 1:     // 低音调
-						VC_Mode = VC4_SHIFT_PITCH_MODE;
-						SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
-				
-						ShiftPitchIdx = -4;
-						SACM_VC4_ShiftPitch(ShiftPitchIdx, &VC4WorkRam);
-						break;
-				
-					case 2:     // 机器人音调
-						VC_Mode = VC4_RobotEffect1;
-						SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
-						break;
-				
-					default:
-						EffectMode = 0;
-						break;
-				}
-				
-				EffectMode++;
-				if(EffectMode >= 3)
-				{
-					EffectMode = 0;
-				}
-
-				SACM_VC4_Mode(VC4_SHIFT_PITCH_MODE, &VC4WorkRam); 
-				// SACM_VC4_ShiftPitch(0, &VC4WorkRam); 
-				SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);	// manual mode playback
-				break;
-	
-			case 0x0080:    // IOA7 + Vcc
-				
-				break;
-
-			case 0x0010:	// IOA4 + Vcc	
-				// 停止播放	
-				SACM_A1800_fptr_Stop();
-				SACM_VC4_Stop();
-				break;
-				
-			case 0x0020:	// IOA5 + Vcc
-				chk_MIC_voice_flag = 1;   ////start MIC EnvDet
-				CMPADC_Init();
-				EnvDet_Initial();										//Envelope initial
-				EnvDet_SetAttackLevel(EnvDet_AttackLevel);  //音量增大门槛值
-				EnvDet_SetAttackTime(EnvDet_AttackTime);   //音量增大到门槛值后持续时间
-				EnvDet_SetReleaseLevel(EnvDet_ReleaseLevel); //音量减小门槛值
-				EnvDet_SetReleaseTime(EnvDet_ReleaseTime);  //音量减小到门槛值后持续时间
-				EnvDet_Start();
-				
-				break;
-				
-			case 0x0040:	// IOA6 + Vcc		
-				EnvDet_Stop();
-				chk_MIC_voice_flag = 0;	   ////stop MIC EnvDet
-				__asm("clrb [0x3005], 1");  //P_IOB_Buffer			0x3005	
-				__asm("clrb [0x3001], 7");  //P_IOA_Buffer
-				break;
-				
-			case 0x0800:	// IOA11 + Vcc		
-				if(chk_MIC_voice_flag == 1)
-					chk_MIC_voice_flag = 0;	   ////stop MIC EnvDet
-				*P_INT_Ctrl &= ~C_IRQ3_ADC;			// ADC interrupt off,when VC4 Play;
-				SACM_A1800_fptr_Initial();                 // A1800 initial
-				USER_A1800_fptr_Volume(9);
-				A1800_fptr_Event_Initial();	
-				A1800_fptr_IO_Event_Enable();
-				SACM_A1800_fptr_Stop();
-				A1800_Idx = 0;
-				USER_A1800_fptr_SetStartAddr(A1800_Idx);    // Set index address
-				SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
-				
-				SACM_VC4_Initial();			// VC4 initial
-				// SACM_VC4_Volume_Control(C_Volume_Control_Enable);       	
-		        // VC_Mode = VC4_SHIFT_PITCH_MODE;
-		        SACM_VC4_Mode(VC_Mode, &VC4WorkRam);	                    
-				SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);	// manual mode playback
-				break;
-				
-			default:
-				break;
-		} // end of switch
- 		// IOA7 ADC 按键只在空闲态检测
-		Handle_IOA7_ADC_Key();
-
+		if (keydown_rec == 10)
+		{
+			Handle_Key();
+		}
+		else
+		{
+			// IOA7 ADC 按键只在空闲态检测
+		   Handle_IOA7_ADC_Key();
+		}
+		
 		SACM_VC4_ServiceLoop();
 		SACM_DVR1800_ServiceLoop();
 		
@@ -367,7 +232,7 @@ int main()
 				keydown_rec = 0;
 				CMPADC_IOA7Key_Init();
 			}
-		}else
+		}else if (keydown_rec == 10)
 		{
 			// 上拉按键模式的音量检测状态机
 			if (AutoState != AUTO_IDLE)
@@ -384,6 +249,175 @@ int main()
 	}
 	
 	return 0;
+}
+void Handle_Key(void)
+{
+	Key = SP_GetCh();
+	switch(Key)
+	{	
+		case 0x0001:	// IOA0 + Vcc
+			if(chk_MIC_voice_flag == 1)
+				chk_MIC_voice_flag = 0;	   ////stop MIC EnvDet
+			SACM_A1800_fptr_Stop();
+			SACM_VC4_Stop();
+			// 擦除录音数据
+			__asm("INT OFF");
+			MoveSPIDriverToRAM_0();
+			MoveSPIDriverToRAM_2();
+			SPI_Flash_Block_Erase(R_REC_block);
+			SPI_Flash_Block_Erase(R_REC_block + 1);
+			CMPADC_Init();
+			*P_INT_Ctrl = C_IRQ0_TMA | C_IRQ3_ADC;			//Allow TMA, ADC interrupt only.
+			__asm("INT FIQ,IRQ");
+			
+			MoveSPIDriverToRAM_0();
+			MoveSPIDriverToRAM_1();
+			SACM_DVR1800_Initial();
+			USER_DVR1800_SetStartAddr(0x4, R_REC_block);			// skip 4 Bytes for length header
+			SACM_DVR1800_Rec(RecMonitorOff, Mic, DVR1800_BIT_RATE_16K);
+			break;
+		
+		case 0x0002:	// IOA1 + Vcc
+			SACM_DVR1800_Stop();
+			break;
+
+		case 0x0004:	// IOA2 + Vcc
+			if(chk_MIC_voice_flag == 1)
+				chk_MIC_voice_flag = 0;	   ////stop MIC EnvDet
+			SACM_A1800_fptr_Initial();                 // A1800 initial
+			USER_A1800_fptr_Volume(9);
+			A1800_fptr_Event_Initial();	
+			A1800_fptr_IO_Event_Enable();
+			// VolCompressInitial();
+			// SetVolCompressLevel(12);
+			SACM_A1800_fptr_Stop();
+
+			Block_Addr = (R_REC_block * 65536)/2;
+			Block_Addr = Block_Addr + 0x8000;
+			DVR18_ExtMem_Low = Block_Addr & 0xffff;
+			DVR18_ExtMem_High = Block_Addr >> 16;
+
+			SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
+			
+			SACM_VC4_Initial();			// VC4 initial
+			SACM_VC4_AD_FIRType(ADC_FIR_Type);
+			SACM_VC4_DA_FIRType(DAC_FIR_Type);
+			SACM_VC4_Volume(65535);// 最大声
+
+			// SACM_VC4_Volume_Control(C_Volume_Control_Enable);
+
+			switch(EffectMode)
+			{
+				case 0:     // 高音调
+					VC_Mode = VC4_SHIFT_PITCH_MODE;
+					SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
+			
+					ShiftPitchIdx = 8;
+					SACM_VC4_ShiftPitch(ShiftPitchIdx, &VC4WorkRam);
+					break;
+			
+				case 1:     // 低音调
+					VC_Mode = VC4_SHIFT_PITCH_MODE;
+					SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
+			
+					ShiftPitchIdx = -4;
+					SACM_VC4_ShiftPitch(ShiftPitchIdx, &VC4WorkRam);
+					break;
+			
+				case 2:     // 机器人音调
+					VC_Mode = VC4_RobotEffect1;
+					SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
+					break;
+			
+				default:
+					EffectMode = 0;
+					break;
+			}
+			
+			EffectMode++;
+			if(EffectMode >= 3)
+			{
+				EffectMode = 0;
+			}
+
+			SACM_VC4_Mode(VC4_SHIFT_PITCH_MODE, &VC4WorkRam); 
+			// SACM_VC4_ShiftPitch(0, &VC4WorkRam); 
+			SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);	// manual mode playback
+			break;
+
+		case 0x0080:    // IOA7 + Vcc
+			// 自动监听式变声器模式
+			if (KeyBusy)
+				break;
+			KeyBusy = 1;
+			PlayDiSound();
+			EffectMode = KeyCount;
+		
+			if (KeyCount < 3)
+			{
+				KeyCount++;
+				AutoState = AUTO_IDLE;
+				Auto_PrepareRecord();
+				AutoState = AUTO_WAIT_ATTACK;
+			}
+			else
+			{
+				PlayDiSound();
+				KeyCount = 0;
+				Auto_StopWorkMode();
+			}
+		
+			KeyBusy = 0;
+			break;
+
+		case 0x0010:	// IOA4 + Vcc	
+			// 停止播放	
+			SACM_A1800_fptr_Stop();
+			SACM_VC4_Stop();
+			break;
+			
+		case 0x0020:	// IOA5 + Vcc
+			chk_MIC_voice_flag = 1;   ////start MIC EnvDet
+			CMPADC_Init();
+			EnvDet_Initial();										//Envelope initial
+			EnvDet_SetAttackLevel(EnvDet_AttackLevel);  //音量增大门槛值
+			EnvDet_SetAttackTime(EnvDet_AttackTime);   //音量增大到门槛值后持续时间
+			EnvDet_SetReleaseLevel(EnvDet_ReleaseLevel); //音量减小门槛值
+			EnvDet_SetReleaseTime(EnvDet_ReleaseTime);  //音量减小到门槛值后持续时间
+			EnvDet_Start();
+			
+			break;
+			
+		case 0x0040:	// IOA6 + Vcc		
+			EnvDet_Stop();
+			chk_MIC_voice_flag = 0;	   ////stop MIC EnvDet
+			__asm("clrb [0x3005], 1");  //P_IOB_Buffer			0x3005	
+			__asm("clrb [0x3001], 7");  //P_IOA_Buffer
+			break;
+			
+		case 0x0800:	// IOA11 + Vcc		
+			if(chk_MIC_voice_flag == 1)
+				chk_MIC_voice_flag = 0;	   ////stop MIC EnvDet
+			*P_INT_Ctrl &= ~C_IRQ3_ADC;			// ADC interrupt off,when VC4 Play;
+			SACM_A1800_fptr_Initial();                 // A1800 initial
+			USER_A1800_fptr_Volume(9);
+			A1800_fptr_Event_Initial();	
+			A1800_fptr_IO_Event_Enable();
+			SACM_A1800_fptr_Stop();
+			A1800_Idx = 0;
+			USER_A1800_fptr_SetStartAddr(A1800_Idx);    // Set index address
+			SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
+			
+			SACM_VC4_Initial();			// VC4 initial
+			// SACM_VC4_Volume_Control(C_Volume_Control_Enable);       	
+			// VC_Mode = VC4_SHIFT_PITCH_MODE;
+			SACM_VC4_Mode(VC_Mode, &VC4WorkRam);	                    
+			SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);	// manual mode playback
+			break;
+			
+		default:
+			break;
+	} // end of switch
 }
 void Auto_StateMachine(void)
 {
@@ -450,7 +484,7 @@ void PlayDiSound(void)
     *P_INT_Ctrl &= ~C_IRQ3_ADC;
 
     SACM_A1800_fptr_Initial();
-    // USER_A1800_fptr_Volume(9);
+    USER_A1800_fptr_Volume(9);
     A1800_fptr_Event_Initial();
     A1800_fptr_IO_Event_Enable();
 
@@ -482,6 +516,22 @@ void PlayDiSound(void)
             break;
         }
     }
+}
+void EnableEnvDet(void)
+{
+	CMPADC_Init();
+	EnvDet_Initial();						//Envelope initial
+	EnvDet_SetAttackLevel(EnvDet_AttackLevel);
+	EnvDet_SetAttackTime(EnvDet_AttackTime);
+	EnvDet_SetReleaseLevel(EnvDet_ReleaseLevel);
+	EnvDet_SetReleaseTime(EnvDet_ReleaseTime);
+	EnvDet_Start();
+	chk_MIC_voice_flag = 1;   ////start MIC EnvDet
+
+    Dbg_AttackCount = 0;
+    Dbg_ReleaseCount = 0;
+    LastAttackCount = 0;
+    LastReleaseCount = 0;
 }
 void Auto_PrepareRecord(void)
 {
@@ -517,22 +567,7 @@ void Auto_PrepareRecord(void)
     EnableEnvDet();
 	AutoBusy = 0;
 }
-void EnableEnvDet(void)
-{
-	CMPADC_Init();
-	EnvDet_Initial();						//Envelope initial
-	EnvDet_SetAttackLevel(EnvDet_AttackLevel);
-	EnvDet_SetAttackTime(EnvDet_AttackTime);
-	EnvDet_SetReleaseLevel(EnvDet_ReleaseLevel);
-	EnvDet_SetReleaseTime(EnvDet_ReleaseTime);
-	EnvDet_Start();
-	chk_MIC_voice_flag = 1;   ////start MIC EnvDet
 
-    Dbg_AttackCount = 0;
-    Dbg_ReleaseCount = 0;
-    LastAttackCount = 0;
-    LastReleaseCount = 0;
-}
 void Auto_StopWorkMode(void)
 {
 	AutoState = AUTO_IDLE;
@@ -683,18 +718,20 @@ void Handle_IOA7_ADC_Key(void)
             Do_IOA7_LowPress_RecorderAction();
         }else if (adcKey == ADC_KEY_HIGH_PRESS)
 		{
-			// 自动监听式变声器模式
-			if (KeyBusy)
-			{
-				return;
-			}
+			// 永久退出 IOA7 ADC 按键模式，将 CMPADC 交给麦克风静音检测使用
+
+			keydown_rec = 10;
+
 			KeyBusy = 1;
+
 			PlayDiSound();
+
 			EffectMode = KeyCount;
-		
+
 			if (KeyCount < 3)
 			{
 				KeyCount++;
+
 				AutoState = AUTO_IDLE;
 				Auto_PrepareRecord();
 				AutoState = AUTO_WAIT_ATTACK;
@@ -705,7 +742,7 @@ void Handle_IOA7_ADC_Key(void)
 				KeyCount = 0;
 				Auto_StopWorkMode();
 			}
-		
+
 			KeyBusy = 0;
 		}
 		
@@ -736,7 +773,7 @@ void Do_IOA7_LowPress_RecorderAction(void)
 	// 	SACM_DVR1800_ServiceLoop();
 	// 	System_ServiceLoop();
 	// }
-	// 开启录音
+	// 擦除录音数据
 	SACM_DVR1800_Stop();
 	
 	WatchdogClear();
@@ -761,36 +798,6 @@ void Do_IOA7_LowPress_RecorderAction(void)
 	
 	SACM_DVR1800_Rec(RecMonitorOff, Mic, DVR1800_BIT_RATE_16K);
 	keydown_rec = 1;
-    if (keydown_rec == 10)
-    {
-		// 先停止旧流程
-		chk_MIC_voice_flag = 0;
-		EnvDet_Stop();
-		CMPADC_Stop();
-
-		// 如果正在播音就先关掉
-		SACM_A1800_fptr_Stop();
-		SACM_VC4_Stop();
-		SACM_DVR1800_Stop();
-		// 先擦除录音区
-		__asm("INT OFF");
-		MoveSPIDriverToRAM_0();
-		MoveSPIDriverToRAM_2();
-		SPI_Flash_Block_Erase(R_REC_block);
-		SPI_Flash_Block_Erase(R_REC_block + 1);// 开始录音这个ADC比较器必须打开
-		
-		__asm("INT FIQ,IRQ");
-
-		// 再初始化 DVR1800
-		MoveSPIDriverToRAM_0();
-		MoveSPIDriverToRAM_1();
-		SACM_DVR1800_Initial();
-
-		CMPADC_Init();
-
-		g_tma64Ticks = 0;
-		keydown_rec = 1;
-    }
 }
 void Wait_TMA64_Ticks(unsigned ticks)
 {
