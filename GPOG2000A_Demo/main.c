@@ -103,7 +103,7 @@ unsigned EnvDet_ReleaseTime = 3000;  //音量减小到门槛值后持续时间
 
 unsigned PWMorCUR_Flg = 0; // 0:CUR DACOut ,1:PWM Out
 
-unsigned R_REC_block = 29;   // 16M Max31;  32M Max63; 64M  Max127    /////29 =>>  0xF0000
+unsigned R_REC_block = 6;   // 16M Max31;  32M Max63; 64M  Max127    //0x38000 ///29 =>>  0xF0000
 unsigned char EffectMode = 0;   // 0:高音 1:低音 2:机器人
 //***************************************************************************************
 // Main Function Area
@@ -171,9 +171,9 @@ int main()
 	LastAttackCount = 0;
 	LastReleaseCount = 0;
 	// ① 开机后进入 IOA7 ADC 按键检测模式
-	// CMPADC_IOA7Key_Init();
+	CMPADC_IOA7Key_Init();
 	// ② 开机进入上拉按键模式
-	keydown_rec = 10;
+	// keydown_rec = 10;
 	while(1)
 	{
 		if (keydown_rec == 10)

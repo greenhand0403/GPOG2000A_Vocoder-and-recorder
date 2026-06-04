@@ -74,9 +74,9 @@ T_A1800_fptr_IO_Event:
 .define C_SpeechDataOffsetLow			0x0000
 .define C_SpeechDataOffsetHigh			0x0021
 
-.define C_ROM_Table						0
-.define C_FilerMerger_Version1			1
-.define C_SPEECH_Source_Type			C_FilerMerger_Version1     ////C_FilerMerger_Version1    //C_ROM_Table    //
+.define C_ROM_Table						1
+.define C_FilerMerger_Version1			0
+.define C_SPEECH_Source_Type			C_ROM_Table     ////C_FilerMerger_Version1    //C_ROM_Table    //
 
 //**************************************************************************
 // Variable Publication Area

@@ -310,11 +310,11 @@ F_SPI1_Flash_AutoMode_Initial: .proc
 	call F_SPI1_ChangeStatusTo4IOMode;
 		
 	R1 = [P_SPI_Auto_Setting]
-	R1 |= C_SPI_High_Driving_6mA | C_SPI_CS_KeepLow;
+	R1 |= C_SPI_High_Driving_12mA | C_SPI_CS_KeepLow;
 	[P_SPI_Auto_Setting] = R1
 	
 F_SPI1_AutoMode:
-	R1 = C_SPI_Enable | C_SPI_Auto_Enable | C_SPI_CS_SPI | C_MasterMode | C_SPI1_SCK_SYSCLK;
+	R1 = C_SPI_Enable | C_SPI_Auto_Enable | C_SPI_CS_SPI | C_MasterMode | C_SPI1_SCK_SYSCLK_Div_2;
 	R1 |= C_SPI_Clock_Phase_Normal | C_SPI_Clock_Pol_Normal;
 
 ?L_Setup_1IO:
