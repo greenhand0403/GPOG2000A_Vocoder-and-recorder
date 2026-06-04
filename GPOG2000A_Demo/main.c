@@ -151,12 +151,26 @@ void Do_IOA7_LowPress_RecorderAction(void);
 #define KEYDOWN_LOW_PLAYING       2
 #define KEYDOWN_HIGH_MODE    3
 // 用于调试
-unsigned keydown_rec = 0;
+unsigned keydown_rec = KEYDOWN_LOW_IDLE;
 #define KEYDOWN_REC_TIME (64*5)
 volatile unsigned g_tmaDiv = 0;
 volatile unsigned g_tma64Ticks = 0;
 
 void Wait_TMA64_Ticks(unsigned ticks);
+#define ADC_LOW_KEY_LONG_TICKS       64      // 约 1 秒
+#define ADC_LOW_KEY_SHORT_MIN_TICKS  3       // 小于这个认为是抖动
+
+#define LOW_KEY_ACTION_NONE    0
+#define LOW_KEY_ACTION_SHORT   1
+#define LOW_KEY_ACTION_LONG    2
+#define LOW_KEY_ACTION_BOUNCE  3
+
+volatile unsigned LowKey_State = 0;          // 0=未按下, 1=按住中
+volatile unsigned LowKey_DownTick = 0;       // 按下时刻
+volatile unsigned LowKey_LastHoldTicks = 0;  // 最近一次按住时长
+volatile unsigned LowKey_Action = LOW_KEY_ACTION_NONE;
+void Update_ADC_LowKey_Action(unsigned adcKey);
+volatile unsigned UpdateADCLongPressFlag = 0;
 int main()
 {
 	Key = 0;
@@ -557,7 +571,48 @@ unsigned Scan_IOA7_ADC_Key(void)
     Dbg_IOA7_ADC_Key = key;
     return key;
 }
+void Update_ADC_LowKey_Action(unsigned adcKey)
+{
+    unsigned now;
+    unsigned hold;
 
+    now = g_tma64Ticks;
+
+    // 默认没有新动作
+    LowKey_Action = LOW_KEY_ACTION_NONE;
+
+    if (adcKey == ADC_KEY_LOW_PRESS)
+    {
+        if (LowKey_State == 0)
+        {
+            LowKey_State = 1;
+            LowKey_DownTick = now;
+        }
+    }
+    else
+    {
+        if (LowKey_State == 1)
+        {
+            LowKey_State = 0;
+
+            hold = now - LowKey_DownTick;
+            LowKey_LastHoldTicks = hold;
+
+            if (hold >= ADC_LOW_KEY_LONG_TICKS)
+            {
+                LowKey_Action = LOW_KEY_ACTION_LONG;
+            }
+            else if (hold >= ADC_LOW_KEY_SHORT_MIN_TICKS)
+            {
+                LowKey_Action = LOW_KEY_ACTION_SHORT;
+            }
+            else
+            {
+                LowKey_Action = LOW_KEY_ACTION_BOUNCE;
+            }
+        }
+    }
+}
 void Handle_IOA7_ADC_Key(void)
 {
     unsigned adcKey;
@@ -572,15 +627,48 @@ void Handle_IOA7_ADC_Key(void)
     if (KeyBusy || AutoBusy)
         return;
 
-    adcKey = Scan_IOA7_ADC_Key();
+	adcKey = Scan_IOA7_ADC_Key();
+
+	if (UpdateADCLongPressFlag)
+	{
+		Update_ADC_LowKey_Action(adcKey);
+		// 按键释放时才判定长按或短按
+		if (adcKey == ADC_KEY_NONE)
+		{
+			if (LowKey_Action == LOW_KEY_ACTION_SHORT)
+			{
+				// 短按松开：播放已经录好的声音，播放结束后自动回到 ADC 按键模式
+
+				// 处理完一次短按，清除flag
+				UpdateADCLongPressFlag = 0;
+			}
+			else if (LowKey_Action == LOW_KEY_ACTION_LONG)
+			{
+				// 长按松开：滴声 -> 擦除 -> 录音 5 秒 -> 停止 -> 回到 ADC 按键模式
+				PlayDiSound();
+				
+				// 处理完一次长按，清除flag
+				UpdateADCLongPressFlag = 0;
+			}
+		}
+		Last_IOA7_ADC_Key = adcKey;
+		return;
+	}
 
     if ((Last_IOA7_ADC_Key == ADC_KEY_NONE) && (adcKey != ADC_KEY_NONE))
     {
         if (adcKey == ADC_KEY_LOW_PRESS)
         {
 			// 自动录音机模式
-			PlayDiSound();
-            Do_IOA7_LowPress_RecorderAction();
+			// PlayDiSound();
+            // Do_IOA7_LowPress_RecorderAction();
+			// 测试阶段：下拉按键不执行动作
+            // 观察 Dbg_LowKey_ShortCount / Dbg_LowKey_LongCount
+			if (UpdateADCLongPressFlag==0)
+			{
+				UpdateADCLongPressFlag = 1;
+			}
+			
         }else if (adcKey == ADC_KEY_HIGH_PRESS)
 		{
 			// 永久退出 IOA7 ADC 按键模式，将 CMPADC 交给麦克风静音检测使用
@@ -634,7 +722,6 @@ void Do_IOA7_LowPress_RecorderAction(void)
 	MoveSPIDriverToRAM_1();
 	SACM_DVR1800_Initial();
 	// 开始录音
-	
 	USER_DVR1800_SetStartAddr(0x4, R_REC_block);			// skip 4 Bytes for length header
 	g_tmaDiv = 0;
     g_tma64Ticks = 0;
