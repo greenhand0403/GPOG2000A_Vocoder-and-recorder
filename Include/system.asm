@@ -3,7 +3,7 @@
 //**************************************************************************
 .include GPCE36_CE5.inc
 
-.define C_DebounceCnt			0x0080
+.define C_DebounceCnt			0x0060
 .define C_SACM_RAMP_DELAY   	80
 .define C_MuteCnt	80	// timer * Cnt
 .define C_NormalCnt	20	// timer * Cnt

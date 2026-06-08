@@ -153,7 +153,7 @@ void Do_IOA7_LowPress_RecorderAction(void);
 #define KEYDOWN_LOW_StartPlayRecorded    4
 // 用于调试
 unsigned keydown_rec = KEYDOWN_LOW_IDLE;
-#define KEYDOWN_REC_TIME (64*5)
+#define KEYDOWN_REC_TIME (64*7)
 volatile unsigned g_tmaDiv = 0;
 volatile unsigned g_tma64Ticks = 0;
 
@@ -195,22 +195,24 @@ int main()
 	// keydown_rec = 10;
 	while(1)
 	{
-		if (keydown_rec == KEYDOWN_HIGH_MODE)
-		{
-			Handle_Key();
-		}
-		else
+		if (keydown_rec == KEYDOWN_LOW_IDLE)
 		{
 			// IOA7 ADC 按键只在空闲态检测
 		   Handle_IOA7_ADC_Key();
 		}
-		
+		else if (keydown_rec == KEYDOWN_HIGH_MODE)
+		{
+			Handle_Key();
+		}
+		// 变声器服务更新
 		SACM_VC4_ServiceLoop();
+		// 录音服务更新
 		SACM_DVR1800_ServiceLoop();
 		
 		// 下拉按键模式的长按录音、短按播放的状态机
 		if(keydown_rec == KEYDOWN_LOW_RECORDING)
 		{
+			// 正在录音状态，录满时间后自动停止
 			if (g_tma64Ticks >= KEYDOWN_REC_TIME)
 			{
 				// 停止录音
@@ -235,6 +237,7 @@ int main()
 		}
 		else if (keydown_rec == KEYDOWN_LOW_StartPlayRecorded)
 		{
+			// 准备播放录音状态
 			keydown_rec = KEYDOWN_LOW_PLAYING;
 			// 初始化播放录音设置
 			CMPADC_Stop();
@@ -250,6 +253,8 @@ int main()
 			SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
 			
 			SACM_VC4_Initial();			// VC4 initial
+			// SACM_VC4_AD_FIRType(ADC_FIR_Type);
+    		// SACM_VC4_DA_FIRType(DAC_FIR_Type);
 			SACM_VC4_Volume(65535);// 最大声
 
 			SACM_VC4_Mode(VC_Mode, &VC4WorkRam);         
@@ -276,8 +281,9 @@ int main()
 				}
 			}
 		}
+		// 系统按键更新
 		System_ServiceLoop();
-		
+		// 麦克风音量检测
 		EnvDet_Playloop();
 	}
 	
@@ -399,9 +405,9 @@ void PlayDiSound(void)
     while ((SACM_VC4_Status() & 0x01) != 0)
     {
         SACM_VC4_ServiceLoop();
-        SACM_DVR1800_ServiceLoop();
+        // SACM_DVR1800_ServiceLoop();
         System_ServiceLoop();
-
+		
         if (--timeout == 0)
         {
             SACM_VC4_Stop();
@@ -745,7 +751,7 @@ void Wait_TMA64_Ticks(unsigned ticks)
 
     while (g_tma64Ticks < ticks)
     {
-        SACM_DVR1800_ServiceLoop();
+        // SACM_DVR1800_ServiceLoop();
         System_ServiceLoop();
     }
 }

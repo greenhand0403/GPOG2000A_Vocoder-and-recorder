@@ -87,3 +87,6 @@ Download*.log
 !*.gpj
 !*.ini
 !Resource.h
+
+GPOG2000A_Demo/GPOG2000A_Demo.lik
+GPOG2000A_Demo/Makefile
