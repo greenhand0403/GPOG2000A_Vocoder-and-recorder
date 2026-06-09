@@ -20,6 +20,8 @@
 //**************************************************************************
 // Contant Defintion Area
 //**************************************************************************
+#define C_Volume_Control_Enable			0x01
+#define C_Volume_Control_Disable		0x00
 // 上拉按键时自动监听模式的状态定义
 #define AUTO_IDLE           0   // 上拉模式，未启动自动监听
 #define AUTO_WAIT_ATTACK    1   // 上拉模式，等待声音触发
@@ -139,8 +141,8 @@ unsigned Temp;
 unsigned Key;  // SP_GetCh 返回的数字按键的值
 
 // C_PGA_29dB
-unsigned EnvDet_AttackLevel = 0x0618;  //音量增大门槛值0610 0600
-unsigned EnvDet_AttackTime = 15;   //音量增大到门槛值后持续时间15 64
+unsigned EnvDet_AttackLevel = 0x0600;  //音量增大门槛值0610 0600
+unsigned EnvDet_AttackTime = 64;   //音量增大到门槛值后持续时间15 64
 unsigned EnvDet_ReleaseLevel = 0x0300; //音量减小门槛值0300
 unsigned EnvDet_ReleaseTime = 2500;  //音量减小到门槛值后持续时间2500 640
 
@@ -272,6 +274,7 @@ int main()
 			SACM_VC4_Initial();			// VC4 initial
 			// SACM_VC4_AD_FIRType(ADC_FIR_Type);// 这里如果你启用这两句代码，会导致无法变调播放，我怀疑只需要initial一次，后续可以stop再暂停
     		// SACM_VC4_DA_FIRType(DAC_FIR_Type);
+			// SACM_VC4_Volume_Control(C_Volume_Control_Enable); // 这个代码也作用不明
 			SACM_VC4_Volume(65535);// 最大声
 
 			SACM_VC4_Mode(VC_Mode, &VC4WorkRam);         
@@ -335,16 +338,6 @@ void Handle_Key(void)
 			PlayDiSound();
 			KeyCount = 0;
 			Auto_StopWorkMode();
-			// TODO: 测试，试图从数字按键的状态4空闲态进入到ADC按键模式。重新允许 ADC 按键模式判断下一次是上拉还是下拉
-			// LowKey_State = 0;
-			// LowKey_Action = LOW_KEY_ACTION_NONE;
-			// UpdateADCLongPressFlag = 0;
-			// Last_IOA7_ADC_Key = ADC_KEY_NONE;
-
-			// Disable_IOA7_DigitalKey();
-			// CMPADC_IOA7Key_Init();
-
-			// keydown_rec = KEYDOWN_LOW_IDLE;
 		}
 	
 		KeyBusy = 0;
@@ -430,6 +423,7 @@ void PlayDiSound(void)
 	// 很奇怪这两句话的作用是什么？注释掉的话，可以播放滴声，但是无法自动监听并回播录音了
     SACM_VC4_AD_FIRType(ADC_FIR_Type);
     SACM_VC4_DA_FIRType(DAC_FIR_Type);
+	// SACM_VC4_Volume_Control(C_Volume_Control_Enable);
     SACM_VC4_Volume(65535);
 
     VC_Mode = VC4_SHIFT_PITCH_MODE;
@@ -551,6 +545,7 @@ void Auto_StartPlayRecorded(void)
 	SACM_VC4_Initial();			// VC4 initial
 	SACM_VC4_AD_FIRType(ADC_FIR_Type);  // TODO: 自动监听式变声播放也需要这个配置？不然没法播放
 	SACM_VC4_DA_FIRType(DAC_FIR_Type);
+	// SACM_VC4_Volume_Control(C_Volume_Control_Enable);
 	SACM_VC4_Volume(65535);// 最大声
 
 	switch(EffectMode)
