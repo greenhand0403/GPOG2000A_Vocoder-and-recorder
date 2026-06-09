@@ -105,7 +105,7 @@ extern void CMPADC_IOA7Key_Init(void);  // 初始化 IOA7 ADC 按键功能
 // 上拉模式自动监听式变声器相关状态处理函数
 void Auto_PrepareRecord(void);
 void Auto_StartRecord(void);
-void Auto_StartPlayRecorded(void);
+void Auto_StartPlayRecorded(void);  // 上拉按键监听式变声器自动触发播放刚才录音
 void Auto_StopWorkMode(void);
 void CMPADC_Stop(void);
 
@@ -136,7 +136,7 @@ int ADC_FIR_Type;
 int DAC_FIR_Type;
 // unsigned A1800_Idx = 0;
 unsigned long Block_Addr = 0; 
-int chk_MIC_voice_flag = 0;  // TODO: 测试，判断需要检测麦克风输入
+int chk_MIC_voice_flag = 0;  // 判断是否需要检测麦克风输入，中断相关
 unsigned Temp;
 unsigned Key;  // SP_GetCh 返回的数字按键的值
 
@@ -158,11 +158,11 @@ unsigned LastAttackCount = 0;
 unsigned LastReleaseCount = 0;
 // 上拉模式：按第1次先进入工作模式，默认是高音调模式；按第2次，还是在工作模式，但是切换低音调；按第3次，还是在工作模式，但是机器人音效；按第4次还是播放一次滴声，然后退出工作模式
 unsigned char KeyCount = 0;
-// 上拉按键 1表示忙，正在处理
+// 上拉按键 1表示忙，正在处理，变量用于避免连续处理多次按键事件
 volatile unsigned char KeyBusy = 0;
 // 上拉模式 1表示忙，正在做录音准备，0表示空闲，处于前面三种变声自动监听状态，需要去处理状态机逻辑
 volatile unsigned char AutoBusy = 0;
-// TODO: 仅供测试使用，查看按键 AD 值
+// 仅供测试使用，查看按键 AD 值
 volatile unsigned Dbg_IOA7_ADC_Raw = 0;
 volatile unsigned Dbg_IOA7_ADC_Key = ADC_KEY_NONE;
 // 上一次 ADC 按键状态
@@ -197,15 +197,14 @@ int main()
 	ShiftPitchIdx = 0;
 	ConstPitchIdx = 0;    
   	EchoGainIdx = 4;
-	// TODO: 移除冗余代码，上拉按键需要的音量检测
-	// AutoState = AUTO_IDLE;
-	// LastAttackCount = 0;
-	// LastReleaseCount = 0;
 	// 开机后禁用数字 IO ，进入 IOA7 ADC 按键检测模式
 	Disable_IOA7_DigitalKey();
 	CMPADC_IOA7Key_Init();
-	// 测试代码，开机进入上拉按键模式
+	// 测试代码，开机进入上拉按键模式，初始化需要的音量检测
 	// keydown_rec = KEYDOWN_HIGH_MODE;
+	// AutoState = AUTO_IDLE;
+	// LastAttackCount = 0;
+	// LastReleaseCount = 0;
 	while(1)
 	{
 		if (keydown_rec == KEYDOWN_LOW_IDLE)
@@ -283,9 +282,10 @@ int main()
 		}
 		else if (keydown_rec == KEYDOWN_LOW_PLAYING)
 		{
-			// 等待播放录音完毕，重新允许IOA7 ADC按键
+			// 等待播放录音完毕，重新允许IOA7 ADC按键，同时禁用 数字按键
 			if ((SACM_VC4_Status() & 0x01) == 0)
 			{
+				// Disable_IOA7_DigitalKey(); // 如果禁用数字按键，会导致开机后无法从上拉连接进入高音调？
 				keydown_rec = KEYDOWN_LOW_IDLE;
 				CMPADC_IOA7Key_Init();
 			}
@@ -429,11 +429,11 @@ void PlayDiSound(void)
     VC_Mode = VC4_SHIFT_PITCH_MODE;
     SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
     SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);
-	// TODO: 等待滴声播放完？好像不是必要代码？
+	// 必须等待滴声播放完
     while ((SACM_VC4_Status() & 0x01) != 0)
     {
         SACM_VC4_ServiceLoop();
-        // SACM_DVR1800_ServiceLoop(); // TODO: 播放滴声，就不需要dvr1800的状态更新？
+        // SACM_DVR1800_ServiceLoop(); // 播放滴声不需要 dvr1800 的状态更新，它主要是录音时使用
         System_ServiceLoop();
 		
         if (--timeout == 0)
@@ -504,8 +504,7 @@ void Auto_StopWorkMode(void)
     Dbg_ReleaseCount = 0;
     LastAttackCount = 0;
     LastReleaseCount = 0;
-	// TODO: 停止麦克风音量检测功能
-    // CMPADC_Silence_Disable();
+	// 停止麦克风音量检测功能
     CMPADC_Stop();
 	EnvDet_Stop();
 	chk_MIC_voice_flag = 0;	   ////stop MIC EnvDet
@@ -543,7 +542,7 @@ void Auto_StartPlayRecorded(void)
 	SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
 	
 	SACM_VC4_Initial();			// VC4 initial
-	SACM_VC4_AD_FIRType(ADC_FIR_Type);  // TODO: 自动监听式变声播放也需要这个配置？不然没法播放
+	SACM_VC4_AD_FIRType(ADC_FIR_Type);  // 自动监听式变声播放也需要这个配置，否则没法播放
 	SACM_VC4_DA_FIRType(DAC_FIR_Type);
 	// SACM_VC4_Volume_Control(C_Volume_Control_Enable);
 	SACM_VC4_Volume(65535);// 最大声
@@ -707,9 +706,10 @@ void Handle_IOA7_ADC_Key(void)
 				// 处理完一次长按，清除flag
 				UpdateADCLongPressFlag = 0;
 			}
-			// 放这里？
+			// 放这里
+			Last_IOA7_ADC_Key = adcKey;
 		}
-		Last_IOA7_ADC_Key = adcKey;// TODO: 下拉长按的这句话是不是应该放在括号里面？
+		// Last_IOA7_ADC_Key = adcKey;// 下拉模式长按的应该放在括号里面
 		return;
 	}
 	// 用户首次按下 ADC 按键的情况
