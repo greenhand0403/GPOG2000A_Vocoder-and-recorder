@@ -137,8 +137,8 @@ unsigned Key;
 // C_PGA_29dB
 unsigned EnvDet_AttackLevel = 0x0610;  //音量增大门槛值0610 0600
 unsigned EnvDet_AttackTime = 15;   //音量增大到门槛值后持续时间15 64
-unsigned EnvDet_ReleaseLevel = 0x0300; //音量减小门槛值
-unsigned EnvDet_ReleaseTime = 2700;  //音量减小到门槛值后持续时间2700 640
+unsigned EnvDet_ReleaseLevel = 0x0300; //音量减小门槛值0300
+unsigned EnvDet_ReleaseTime = 2500;  //音量减小到门槛值后持续时间2500 640
 
 unsigned PWMorCUR_Flg = 0; // 0:CUR DACOut ,1:PWM Out
 
@@ -250,7 +250,7 @@ int main()
 			USER_A1800_fptr_Volume(9);
 			A1800_fptr_Event_Initial();	
 			A1800_fptr_IO_Event_Enable();
-			// VolCompressInitial();
+			// VolCompressInitial();// 作用未知？注释掉也不影响
 			// SetVolCompressLevel(12);
 			SACM_A1800_fptr_Stop();
 			Block_Addr = (R_REC_block * 65536)/2;
@@ -469,7 +469,7 @@ void Auto_PrepareRecord(void)
 
     MoveSPIDriverToRAM_0();
     MoveSPIDriverToRAM_2();
-    SPI_Flash_Block_Erase(R_REC_block);
+    SPI_Flash_Block_Erase(R_REC_block + 0);// 变声器使用 block 6
     SPI_Flash_Block_Erase(R_REC_block + 1);
 
     __asm("INT FIQ,IRQ");
@@ -505,7 +505,7 @@ void Auto_StopWorkMode(void)
 }
 void Auto_StartRecord(void)
 {
-    USER_DVR1800_SetStartAddr(0x4, R_REC_block);// skip 4 Bytes for length header
+    USER_DVR1800_SetStartAddr(0x4, R_REC_block + 0);// skip 4 Bytes for length header 变声器使用 block 6
 	SACM_DVR1800_Rec(RecMonitorOff, Mic, DVR1800_BIT_RATE_16K);
 }
 void Auto_StartPlayRecorded(void)
@@ -523,7 +523,7 @@ void Auto_StartPlayRecorded(void)
 	// SetVolCompressLevel(12);
     SACM_A1800_fptr_Stop();
 
-    Block_Addr = (R_REC_block * 65536)/2;
+    Block_Addr = ((R_REC_block + 0) * 65536)/2;// 变声器使用 block 6
 	Block_Addr = Block_Addr + 0x8000;
 	DVR18_ExtMem_Low = Block_Addr & 0xffff;
 	DVR18_ExtMem_High = Block_Addr >> 16;
@@ -543,7 +543,7 @@ void Auto_StartPlayRecorded(void)
 			break;
 		case 1:     // 低音调
 			VC_Mode = VC4_SHIFT_PITCH_MODE;
-			ShiftPitchIdx = -3;
+			ShiftPitchIdx = -2;
 			break;
 		case 2:     // 机器人音调
 			VC_Mode = VC4_RobotEffect2;
@@ -654,6 +654,7 @@ void Update_ADC_LowKey_Action(unsigned adcKey)
 void Handle_IOA7_ADC_Key(void)
 {
     unsigned adcKey;
+	// unsigned buttonState;
 
 	if (keydown_rec != KEYDOWN_LOW_IDLE)
 		return;
@@ -702,10 +703,10 @@ void Handle_IOA7_ADC_Key(void)
 				UpdateADCLongPressFlag = 1;
 			}
 			
-        }else if (adcKey == ADC_KEY_HIGH_PRESS)
+        }
+		else if (adcKey == ADC_KEY_HIGH_PRESS)
 		{
 			// 永久退出 IOA7 ADC 按键模式，将 CMPADC 交给麦克风静音检测使用
-
 			keydown_rec = KEYDOWN_HIGH_MODE;
 
 			KeyBusy = 1;
@@ -713,7 +714,14 @@ void Handle_IOA7_ADC_Key(void)
 			PlayDiSound();
 
 			EffectMode = KeyCount;
-
+			// 等待按键释放的做法有问题
+			// buttonState = Scan_IOA7_ADC_Key();
+			// while (buttonState == ADC_KEY_HIGH_PRESS)
+			// {
+			// 	buttonState = Scan_IOA7_ADC_Key();
+			// 	System_ServiceLoop();
+			// }
+			
 			if (KeyCount < MAX_SOUND_EFFECT)
 			{
 				KeyCount++;
@@ -723,7 +731,7 @@ void Handle_IOA7_ADC_Key(void)
 				AutoState = AUTO_WAIT_ATTACK;
 			}
 			// 这个分支为什么会影响上拉按键首次进入高音调模式？
-			else 
+			else
 			{
 				PlayDiSound();
 				KeyCount = 0;
@@ -734,7 +742,7 @@ void Handle_IOA7_ADC_Key(void)
 		}
 		
     }
-    Last_IOA7_ADC_Key = adcKey;
+	Last_IOA7_ADC_Key = adcKey;
 }
 void Do_IOA7_LowPress_RecorderAction(void)
 {
