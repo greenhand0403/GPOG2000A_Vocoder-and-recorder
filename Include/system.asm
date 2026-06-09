@@ -48,7 +48,10 @@
 .public F_AutoModeReadNWords
 .public  _AutoModeReadAWords
 .public F_AutoModeReadAWords
-
+.public  _Enable_IOA7_DigitalKey
+.public F_Enable_IOA7_DigitalKey
+.public  _Disable_IOA7_DigitalKey
+.public F_Disable_IOA7_DigitalKey
 //**************************************************************************
 // External Function Declaration
 //**************************************************************************
@@ -65,7 +68,7 @@
 .var R_MuteCnt
 .var R_AUDIO_CH1_Data_Pre
 .var R_AUDIO_CH2_Data_Pre
-
+.var R_IOA7_DigitalKeyEnable
 
 //**************************************************************************
 // CODE Definition Area
@@ -114,7 +117,10 @@ F_System_Initial:
 	[P_IOB_Dir] = R1;
 	R1 = 0x0000;
 	[P_IOB_Buffer] = R1;
-	
+
+	R1 = 0x0000
+	[R_IOA7_DigitalKeyEnable] = R1
+
 	retf;
 	.endp
 
@@ -183,7 +189,45 @@ F_System_ServiceLoop:
 	call F_WatchdogClear;				// clear watchdog register
 	retf;
 	.endp;
+//****************************************************************
+// Function    : F_Enable_IOA7_DigitalKey
+// Description : Enable IOA7 digital key scan
+// Destroy     : R1
+//****************************************************************
+_Enable_IOA7_DigitalKey: .proc
+F_Enable_IOA7_DigitalKey:
+    R1 = 0x0001
+    [R_IOA7_DigitalKeyEnable] = R1
 
+    // 清数字按键残留状态
+    R1 = 0x0000
+    [R_DebounceReg] = R1
+    [R_DebounceCnt] = R1
+    [R_KeyBuf] = R1
+    [R_KeyStrobe] = R1
+
+    retf
+    .endp
+
+
+//****************************************************************
+// Function    : F_Disable_IOA7_DigitalKey
+// Description : Disable IOA7 digital key scan
+// Destroy     : R1
+//****************************************************************
+_Disable_IOA7_DigitalKey: .proc
+F_Disable_IOA7_DigitalKey:
+    R1 = 0x0000
+    [R_IOA7_DigitalKeyEnable] = R1
+
+    // 清数字按键残留状态
+    [R_DebounceReg] = R1
+    [R_DebounceCnt] = R1
+    [R_KeyBuf] = R1
+    [R_KeyStrobe] = R1
+
+    retf
+    .endp
 //****************************************************************
 // Function    : F_Key_DebounceCnt_Down
 // Description : Debounce counter countdown
@@ -215,6 +259,15 @@ F_Key_Scan_ServiceLoop:	.proc
 	//R1 &= 0x087F;					// 8Bits
 	R1 &= 0xFFFF;					// 16Bits
 	//R1 &= 0xFF7F; // 屏蔽 IOA7，IOA7 后面改用 ADC 判断，不再进入 SP_GetCh()
+	R2 = [R_IOA7_DigitalKeyEnable]
+	cmp R2, 0x0000
+	jne ?L_IOA7_Digital_Enable
+
+	// 禁用 IOA7 数字按键扫描，避免干扰 ADC 读取
+	R1 &= 0x087F
+
+	?L_IOA7_Digital_Enable:
+
 	R2 = [R_DebounceReg];
 	[R_DebounceReg] = R1;
 	cmp R2, [R_DebounceReg];
