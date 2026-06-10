@@ -40,7 +40,9 @@
 #define KEYDOWN_LOW_StartPlayRecorded    4  // 下拉模式，手动按键触发播放刚才录音
 #define KEYDOWN_HIGH_WAIT_RELEASE 5  // 进入上拉模式，等待松开按键时才触发进入上拉高音调变调模式
 
-#define KEYDOWN_REC_TIME (64*7)  // 下拉按键自动录音的固定持续时间
+#define KEYDOWN_REC_TIME (64*10)  // 下拉按键自动录音的固定持续时间 换算从录音长度就是 59b2 0000
+#define REC_LEN_10S_LOW_WORD   0x59B2
+#define REC_LEN_10S_HIGH_WORD  0x0000
 
 #define ADC_LOW_KEY_LONG_TICKS       64      // 下拉按键的长按约 1 秒
 #define ADC_LOW_KEY_SHORT_MIN_TICKS  3       // 下拉按键小于这个认为是按键抖动
@@ -180,6 +182,8 @@ volatile unsigned LowKey_DownTick = 0;       // 按下时刻
 volatile unsigned LowKey_LastHoldTicks = 0;  // 最近一次按住时长
 volatile unsigned LowKey_Action = LOW_KEY_ACTION_NONE;  // 下拉 ADC 按键最终要执行的操作
 volatile unsigned UpdateADCLongPressFlag = 0;  // 下拉 ADC 按键模式，标记是否需要进入长按判断逻辑
+
+unsigned RecLenHeadBuf[2];
 //***************************************************************************************
 // Main Function Area
 //***************************************************************************************
@@ -253,32 +257,40 @@ int main()
 		}
 		else if (keydown_rec == KEYDOWN_LOW_StartPlayRecorded)
 		{
-			// 下拉模式短按会进入准备播放录音状态
-			keydown_rec = KEYDOWN_LOW_PLAYING;
-			// 初始化播放录音设置
-			CMPADC_Stop();
-			SACM_A1800_fptr_Initial();                 // A1800 initial
-			USER_A1800_fptr_Volume(9);
-			A1800_fptr_Event_Initial();	
-			A1800_fptr_IO_Event_Enable();
-			// VolCompressInitial();// 作用未知？注释掉也不影响
-			// SetVolCompressLevel(12);
-			SACM_A1800_fptr_Stop();
-			Block_Addr = (R_REC_block * 65536)/2;
-			Block_Addr = Block_Addr + 0x8000;
-			DVR18_ExtMem_Low = Block_Addr & 0xffff;
-			DVR18_ExtMem_High = Block_Addr >> 16;
-			SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
-			
-			SACM_VC4_Initial();			// VC4 initial
-			// SACM_VC4_AD_FIRType(ADC_FIR_Type);// 这里如果你启用这两句代码，会导致无法变调播放，我怀疑只需要initial一次，后续可以stop再暂停
-    		// SACM_VC4_DA_FIRType(DAC_FIR_Type);
-			// SACM_VC4_Volume_Control(C_Volume_Control_Enable); // 这个代码也作用不明
-			SACM_VC4_Volume(65535);// 最大声
+			// 短按播放前，先检查录音长度头是否为 10 秒：59B2 0000
+			if (Check_Record_10s_Length() == 0)
+			{
+				// 长度头不对，不播放，直接回到 ADC 按键等待
+				keydown_rec = KEYDOWN_LOW_IDLE;
+				CMPADC_IOA7Key_Init();
+			}
+			else
+			{
+				// 长度头正确，才允许播放
+				keydown_rec = KEYDOWN_LOW_PLAYING;
 
-			SACM_VC4_Mode(VC_Mode, &VC4WorkRam);         
-			SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);	// manual mode playback
-			// 跑到后续的 loop 里面播放录音
+				// 初始化播放录音设置
+				CMPADC_Stop();
+				SACM_A1800_fptr_Initial();
+				USER_A1800_fptr_Volume(9);
+				A1800_fptr_Event_Initial();	
+				A1800_fptr_IO_Event_Enable();
+
+				SACM_A1800_fptr_Stop();
+
+				Block_Addr = (R_REC_block * 65536) / 2;
+				Block_Addr = Block_Addr + 0x8000;
+				DVR18_ExtMem_Low = Block_Addr & 0xffff;
+				DVR18_ExtMem_High = Block_Addr >> 16;
+
+				SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
+
+				SACM_VC4_Initial();
+				SACM_VC4_Volume(65535);
+
+				SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
+				SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);
+			}
 		}
 		else if (keydown_rec == KEYDOWN_LOW_PLAYING)
 		{
@@ -679,7 +691,7 @@ void Handle_IOA7_ADC_Key(void)
     // 如果是上拉按键模式的音量检测状态机，则不使用ADC按键功能，避免和 EnvDet / 自动录音 / 自动播放抢 CMPADC
     if (AutoState != AUTO_IDLE)
         return;
-
+	// 避免按一次按键响应两次处理事件
     // if (KeyBusy || AutoBusy)
     //     return;
 
@@ -857,3 +869,27 @@ void Do_IOA7_LowPress_RecorderAction(void)
 //         System_ServiceLoop();
 //     }
 // }
+unsigned Check_Record_10s_Length(void)
+{
+    unsigned long addr;
+
+    /*
+       SPI_Flash_ReadNWords 读的是 SPI Flash 物理地址。
+       R_REC_block = 6 时，物理地址 = 6 * 0x10000 = 0x060000。
+       录音长度头就在 block 起始处。
+    */
+    addr = (unsigned long)R_REC_block * 0x10000UL;
+
+    MoveSPIDriverToRAM_0();
+    MoveSPIDriverToRAM_1();
+
+    SPI_Flash_ReadNWords(RecLenHeadBuf, 2, addr);
+
+    if ((RecLenHeadBuf[0] == REC_LEN_10S_LOW_WORD) &&
+        (RecLenHeadBuf[1] == REC_LEN_10S_HIGH_WORD))
+    {
+        return 1;
+    }
+
+    return 0;
+}

@@ -1,6 +1,6 @@
 #####################################################################
 #																	 
-#	Created by u'nSP IDE V4.1.1		16:51:34	06/09/26
+#	Created by u'nSP IDE V4.1.1		11:00:43	06/10/26
 #
 #####################################################################
 
@@ -124,7 +124,7 @@ OBJFILES	= \
 "$(OUTDIR)\isr.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\isr.asm" 
 	$(AS) $(ASFLAGS) $(INCLUDES) -o "$(OUTDIR)\isr.obj" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\isr.asm" 
 
-"$(OUTDIR)\system.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\system.asm" "GPCE36_CE5.inc" 
+"$(OUTDIR)\system.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\system.asm" 
 	$(AS) $(ASFLAGS) $(INCLUDES) -o "$(OUTDIR)\system.obj" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\system.asm" 
 
 "$(OUTDIR)\BootCode_User.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\BootCode_User.asm" 
