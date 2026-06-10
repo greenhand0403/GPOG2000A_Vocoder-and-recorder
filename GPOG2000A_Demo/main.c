@@ -4,7 +4,7 @@
 // Programmer : 
 // Last modified date: 2026/06/08
 // Version: 
-// Note: 最小实现版变声器，缺少按键触发的判断逻辑，必须自然的按键并松开才不会出错，长按会触发多次按键，导致系统状态未知
+// Note: 代码量60K flash 8M 变声器分配 block 8 起始的2个block 录音器分配 block 5 起始的2个block
 //==========================================================================
 //**************************************************************************
 // Header File Included Area
@@ -40,7 +40,7 @@
 #define KEYDOWN_LOW_StartPlayRecorded    4  // 下拉模式，手动按键触发播放刚才录音
 #define KEYDOWN_HIGH_WAIT_RELEASE 5  // 进入上拉模式，等待松开按键时才触发进入上拉高音调变调模式
 
-#define KEYDOWN_REC_TIME (64*10)  // 下拉按键自动录音的固定持续时间 换算从录音长度就是 59b2 0000
+#define MAX_REC_TIME (64*10)  // 上拉自动监听变声和下拉按键自动录音的 最长时间 换算从录音长度头就是 59b2 0000 低地址 高地址 换算后是压缩后的 22962 byte 大约 23 KB
 #define REC_LEN_10S_LOW_WORD   0x59B2
 #define REC_LEN_10S_HIGH_WORD  0x0000
 
@@ -149,8 +149,8 @@ unsigned EnvDet_ReleaseLevel = 0x0300; //音量减小门槛值0300
 unsigned EnvDet_ReleaseTime = 2500;  //音量减小到门槛值后持续时间2500 640
 
 unsigned PWMorCUR_Flg = 0; // 0:CUR DACOut ,1:PWM Out
-
-unsigned R_REC_block = 6;   // 16M Max31;  32M Max63; 64M  Max127    //0x38000 ///29 =>>  0xF0000
+// 1个 block 是 64KB 10秒录音大约是 23KB
+unsigned R_REC_block = 6;   // 16M Max31;  32M Max63; 64M  Max127    //6 =>> 0x38000 ///29 =>>  0xF0000
 unsigned char EffectMode = 0;   // 0:高音 1:低音 2:机器人
 // 测试，上拉模式，记录麦克风检测大声时自动触发录音、静音时自动触发播放
 volatile unsigned Dbg_AttackCount;
@@ -233,7 +233,7 @@ int main()
 		if(keydown_rec == KEYDOWN_LOW_RECORDING)
 		{
 			// 下拉模式长按会进入正在录音状态，录满时间后自动停止
-			if (g_tma64Ticks >= KEYDOWN_REC_TIME)
+			if (g_tma64Ticks >= MAX_REC_TIME)
 			{
 				// 停止录音
 				WatchdogClear();
@@ -377,12 +377,17 @@ void Auto_StateMachine(void)
 			break;
 
 		case AUTO_RECORDING:
-			if (Dbg_ReleaseCount != LastReleaseCount)
+			// 情况1：用户提前停止说话，EnvDet 检测到 release
+			// 情况2：用户一直说话/一直播放音乐，达到最长 10 秒，强制视为 release
+			if ((Dbg_ReleaseCount != LastReleaseCount)||(g_tma64Ticks >= MAX_REC_TIME))
 			{
 				LastReleaseCount = Dbg_ReleaseCount;
-
+		
 				SACM_DVR1800_Stop();
-
+		
+				g_tmaDiv = 0;
+				g_tma64Ticks = 0;
+		
 				AutoState = AUTO_WAIT_REC_END;
 			}
 			break;
@@ -531,6 +536,11 @@ void Auto_StopWorkMode(void)
 void Auto_StartRecord(void)
 {
     USER_DVR1800_SetStartAddr(0x4, R_REC_block + 0);// skip 4 Bytes for length header 变声器使用 block 6
+
+	// 上拉自动监听录音开始时，清零计时器
+    g_tmaDiv = 0;
+    g_tma64Ticks = 0;
+
 	SACM_DVR1800_Rec(RecMonitorOff, Mic, DVR1800_BIT_RATE_16K);
 }
 void Auto_StartPlayRecorded(void)
