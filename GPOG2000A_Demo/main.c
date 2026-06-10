@@ -144,7 +144,7 @@ unsigned Key;  // SP_GetCh 返回的数字按键的值
 
 // C_PGA_29dB
 unsigned EnvDet_AttackLevel = 0x0600;  //音量增大门槛值0610 0600
-unsigned EnvDet_AttackTime = 64;   //音量增大到门槛值后持续时间15 64
+unsigned EnvDet_AttackTime = 30;   //音量增大到门槛值后持续时间15 64
 unsigned EnvDet_ReleaseLevel = 0x0300; //音量减小门槛值0300
 unsigned EnvDet_ReleaseTime = 2500;  //音量减小到门槛值后持续时间2500 640
 
@@ -560,7 +560,7 @@ void Auto_StartPlayRecorded(void)
 	SACM_VC4_DA_FIRType(DAC_FIR_Type);
 	// SACM_VC4_Volume_Control(C_Volume_Control_Enable);
 	SACM_VC4_Volume(65535);// 最大声
-
+	
 	switch(EffectMode)
 	{
 		case 0:     // 高音调
@@ -569,7 +569,7 @@ void Auto_StartPlayRecorded(void)
 			break;
 		case 1:     // 低音调
 			VC_Mode = VC4_SHIFT_PITCH_MODE;
-			ShiftPitchIdx = -2;
+			ShiftPitchIdx = -3;
 			break;
 		case 2:     // 机器人音调
 			VC_Mode = VC4_RobotEffect2;
