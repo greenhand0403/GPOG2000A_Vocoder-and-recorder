@@ -44,7 +44,7 @@
 #define REC_LEN_10S_LOW_WORD   0x59B2
 #define REC_LEN_10S_HIGH_WORD  0x0000
 
-#define ADC_LOW_KEY_LONG_TICKS       64      // 下拉按键的长按约 1 秒
+#define ADC_LOW_KEY_LONG_TICKS       128      // 下拉按键的长按约 2 秒
 #define ADC_LOW_KEY_SHORT_MIN_TICKS  3       // 下拉按键小于这个认为是按键抖动
 
 #define LOW_KEY_ACTION_NONE    0  // 下拉按键的空闲状态
@@ -249,6 +249,8 @@ int main()
 					System_ServiceLoop();
 				}
 				// 再播放滴声提示，里面有自动判断等待播放完滴声提示
+				PlayDiSound();
+				// 播放两次滴声
 				PlayDiSound();
 				// 回归 ADC 按键模式等待用户 长按重新录音或者短按播放
 				keydown_rec = KEYDOWN_LOW_IDLE;
@@ -648,16 +650,31 @@ void Update_ADC_LowKey_Action(unsigned adcKey)
 
     if (adcKey == ADC_KEY_LOW_PRESS)
     {
-		// 下拉按键按住时记录标志位
+        // 第一次检测到按下，记录按下时刻
         if (LowKey_State == 0)
         {
             LowKey_State = 1;
             LowKey_DownTick = now;
         }
+        else
+        {
+            // 已经处于按住状态，持续计算按住时长
+            hold = now - LowKey_DownTick;
+            LowKey_LastHoldTicks = hold;
+
+            // 按住达到 2 秒，不等松手，立刻触发长按动作
+            if (hold >= ADC_LOW_KEY_LONG_TICKS)
+            {
+                LowKey_Action = LOW_KEY_ACTION_LONG;
+
+                // 关键：清掉按键状态，避免同一次长按反复触发
+                LowKey_State = 0;
+            }
+        }
     }
     else if (adcKey == ADC_KEY_NONE)
     {
-		// 下拉按键前面按住的话，再松开时，计算中间间隔的时间，判断是长按还是短按
+        // 松手时，只处理短按/抖动
         if (LowKey_State == 1)
         {
             LowKey_State = 0;
@@ -665,11 +682,7 @@ void Update_ADC_LowKey_Action(unsigned adcKey)
             hold = now - LowKey_DownTick;
             LowKey_LastHoldTicks = hold;
 
-            if (hold >= ADC_LOW_KEY_LONG_TICKS)
-            {
-                LowKey_Action = LOW_KEY_ACTION_LONG;
-            }
-            else if (hold >= ADC_LOW_KEY_SHORT_MIN_TICKS)
+            if (hold >= ADC_LOW_KEY_SHORT_MIN_TICKS)
             {
                 LowKey_Action = LOW_KEY_ACTION_SHORT;
             }
@@ -700,28 +713,38 @@ void Handle_IOA7_ADC_Key(void)
 	if (UpdateADCLongPressFlag)
 	{
 		Update_ADC_LowKey_Action(adcKey);
-		// 按键释放时才判定长按或短按
+
+		// 长按达到 2 秒：不等松手，立刻开始录音
+		if (LowKey_Action == LOW_KEY_ACTION_LONG)
+		{
+			PlayDiSound();
+			Do_IOA7_LowPress_RecorderAction();
+
+			// 处理完长按，清除状态，避免重复触发
+			UpdateADCLongPressFlag = 0;
+			LowKey_State = 0;
+			LowKey_Action = LOW_KEY_ACTION_NONE;
+			Last_IOA7_ADC_Key = adcKey;
+
+			return;
+		}
+
+		// 短按仍然必须等松手才触发播放
 		if (adcKey == ADC_KEY_NONE)
 		{
 			if (LowKey_Action == LOW_KEY_ACTION_SHORT)
 			{
-				// 短按松开：播放已经录好的声音（此时是否应该禁用ADC按键？），播放结束后自动回到 ADC 按键模式
 				keydown_rec = KEYDOWN_LOW_StartPlayRecorded;
-				// 处理完一次短按，清除flag
 				UpdateADCLongPressFlag = 0;
 			}
-			else if (LowKey_Action == LOW_KEY_ACTION_LONG)
+			else if (LowKey_Action == LOW_KEY_ACTION_BOUNCE)
 			{
-				// 长按松开：滴声 -> 擦除 -> 录音 5 秒 -> 停止 -> 回到 ADC 按键模式（在主循环状态机里面处理了）
-				PlayDiSound();
-				Do_IOA7_LowPress_RecorderAction();
-				// 处理完一次长按，清除flag
 				UpdateADCLongPressFlag = 0;
 			}
-			// 放这里
+
 			Last_IOA7_ADC_Key = adcKey;
 		}
-		// Last_IOA7_ADC_Key = adcKey;// 下拉模式长按的应该放在括号里面
+
 		return;
 	}
 	// 用户首次按下 ADC 按键的情况
