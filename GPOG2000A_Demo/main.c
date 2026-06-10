@@ -4,7 +4,7 @@
 // Programmer : 
 // Last modified date: 2026/06/08
 // Version: 
-// Note: 代码量60K flash 8M 变声器分配 block 8 起始的2个block 录音器分配 block 5 起始的2个block
+// Note: 代码量60K flash 8M 上拉变声器分配 block 8 起始的2个block 下拉录音器分配 block 5 起始的2个block
 //==========================================================================
 //**************************************************************************
 // Header File Included Area
@@ -87,7 +87,8 @@
 #define C_EnvDet_Running				0x0001
 #define C_EnvDet_AttackActive			0x0002
 #define C_EnvDet_ReleaseActive			0x0004
-
+#define LOW_REC_BLOCK   5   // 下拉录音机起始block
+#define AUTO_REC_BLOCK  8   // 上拉自动监听变声器起始block
 //**************************************************************************
 // External Function Declaration
 //**************************************************************************
@@ -280,7 +281,7 @@ int main()
 
 				SACM_A1800_fptr_Stop();
 
-				Block_Addr = (R_REC_block * 65536) / 2;
+				Block_Addr = (LOW_REC_BLOCK * 65536) / 2;// 下拉录音器模式固定使用 LOW_REC_BLOCK
 				Block_Addr = Block_Addr + 0x8000;
 				DVR18_ExtMem_Low = Block_Addr & 0xffff;
 				DVR18_ExtMem_High = Block_Addr >> 16;
@@ -486,6 +487,9 @@ void Auto_PrepareRecord(void)
         return;
 
     AutoBusy = 1;
+
+	R_REC_block = AUTO_REC_BLOCK;
+
     // 先停止旧流程
     chk_MIC_voice_flag = 0;
     EnvDet_Stop();
@@ -558,7 +562,7 @@ void Auto_StartPlayRecorded(void)
 	// SetVolCompressLevel(12);
     SACM_A1800_fptr_Stop();
 
-    Block_Addr = ((R_REC_block + 0) * 65536)/2;// 变声器使用 block 6
+    Block_Addr = ((AUTO_REC_BLOCK + 0) * 65536)/2;// 变声器使用 AUTO_REC_BLOCK
 	Block_Addr = Block_Addr + 0x8000;
 	DVR18_ExtMem_Low = Block_Addr & 0xffff;
 	DVR18_ExtMem_High = Block_Addr >> 16;
@@ -867,6 +871,7 @@ void Handle_HighWaitRelease(void)
 }
 void Do_IOA7_LowPress_RecorderAction(void)
 {
+	R_REC_block = LOW_REC_BLOCK;
 	// 擦除录音数据
 	SACM_DVR1800_Stop();
 	
@@ -910,8 +915,9 @@ unsigned Check_Record_10s_Length(void)
        SPI_Flash_ReadNWords 读的是 SPI Flash 物理地址。
        R_REC_block = 6 时，物理地址 = 6 * 0x10000 = 0x060000。
        录音长度头就在 block 起始处。
+	   现在改为 LOW_REC_BLOCK 
     */
-    addr = (unsigned long)R_REC_block * 0x10000UL;
+    addr = (unsigned long)LOW_REC_BLOCK * 0x10000UL;
 
     MoveSPIDriverToRAM_0();
     MoveSPIDriverToRAM_1();
