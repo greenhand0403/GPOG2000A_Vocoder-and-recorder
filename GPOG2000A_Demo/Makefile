@@ -1,6 +1,6 @@
 #####################################################################
 #																	 
-#	Created by u'nSP IDE V4.1.1		14:39:54	06/10/26
+#	Created by u'nSP IDE V4.1.1		09:21:50	06/11/26
 #
 #####################################################################
 
@@ -145,7 +145,7 @@ OBJFILES	= \
 "$(OUTDIR)\ORAM_Arrangement.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\ORAM_Arrangement.asm" 
 	$(AS) $(ASFLAGS) $(INCLUDES) -o "$(OUTDIR)\ORAM_Arrangement.obj" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\ORAM_Arrangement.asm" 
 
-"$(OUTDIR)\ComparatorADC.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\ComparatorADC.asm" "GPCE36_CE5.inc" 
+"$(OUTDIR)\ComparatorADC.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\ComparatorADC.asm" 
 	$(AS) $(ASFLAGS) $(INCLUDES) -o "$(OUTDIR)\ComparatorADC.obj" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\ComparatorADC.asm" 
 
 "$(OUTDIR)\CTS_User.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\CTS_User.asm" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\CTS_Sensor.inc" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\Touch_Probe.inc" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\TP_Command.inc" 

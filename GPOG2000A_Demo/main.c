@@ -4,7 +4,9 @@
 // Programmer : 
 // Last modified date: 2026/06/08
 // Version: 
-// Note: 代码量60K flash 8M 上拉变声器分配 block 8 起始的2个block 下拉录音器分配 block 5 起始的2个block
+// Note: 代码量60K 加上预置音频大概占了 3 个 block 
+// flash 8M 一共 16 个 block 上拉变声器分配 block 8 起始的2个block 下拉录音器分配 block 5 起始的2个block
+// 1 个 block 大概能存 30秒的音频，13 block 大概能存 390秒 约 6分钟 的音频
 //==========================================================================
 //**************************************************************************
 // Header File Included Area
@@ -144,18 +146,18 @@ unsigned Temp;
 unsigned Key;  // SP_GetCh 返回的数字按键的值
 
 // C_PGA_29dB
-unsigned EnvDet_AttackLevel = 0x0600;  //音量增大门槛值0610 0600
+unsigned EnvDet_AttackLevel = 0x05e0;  //音量增大门槛值0610 0600
 unsigned EnvDet_AttackTime = 30;   //音量增大到门槛值后持续时间15 64
-unsigned EnvDet_ReleaseLevel = 0x0300; //音量减小门槛值0300
-unsigned EnvDet_ReleaseTime = 2500;  //音量减小到门槛值后持续时间2500 640
+unsigned EnvDet_ReleaseLevel = 0x0340; //音量减小门槛值0300
+unsigned EnvDet_ReleaseTime = 2000;  //音量减小到门槛值后持续时间2500 640
 
 unsigned PWMorCUR_Flg = 0; // 0:CUR DACOut ,1:PWM Out
 // 1个 block 是 64KB 10秒录音大约是 23KB
 unsigned R_REC_block = 6;   // 16M Max31;  32M Max63; 64M  Max127    //6 =>> 0x38000 ///29 =>>  0xF0000
 unsigned char EffectMode = 0;   // 0:高音 1:低音 2:机器人
 // 测试，上拉模式，记录麦克风检测大声时自动触发录音、静音时自动触发播放
-volatile unsigned Dbg_AttackCount;
-volatile unsigned Dbg_ReleaseCount;
+volatile unsigned Dbg_AttackCount; // 达到攻击门槛值时次数加一，此时如果持续保持高于门槛值，攻击次数时不会连续增加的
+volatile unsigned Dbg_ReleaseCount; // 达到释放门槛值时次数才会加一
 unsigned AutoState = AUTO_IDLE;  // 上拉模式，自动监听式变声器需要的状态变量
 unsigned LastAttackCount = 0;
 unsigned LastReleaseCount = 0;
@@ -202,6 +204,8 @@ int main()
 	ShiftPitchIdx = 0;
 	ConstPitchIdx = 0;    
   	EchoGainIdx = 4;
+	// 开机测试
+	// PlayDiSound();
 	// 开机后禁用数字 IO ，进入 IOA7 ADC 按键检测模式
 	Disable_IOA7_DigitalKey();
 	CMPADC_IOA7Key_Init();
@@ -290,7 +294,6 @@ int main()
 
 				SACM_VC4_Initial();
 				SACM_VC4_Volume(65535);
-
 				SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
 				SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);
 			}
@@ -574,7 +577,7 @@ void Auto_StartPlayRecorded(void)
 	SACM_VC4_DA_FIRType(DAC_FIR_Type);
 	// SACM_VC4_Volume_Control(C_Volume_Control_Enable);
 	SACM_VC4_Volume(65535);// 最大声
-	
+
 	switch(EffectMode)
 	{
 		case 0:     // 高音调
