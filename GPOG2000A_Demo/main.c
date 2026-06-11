@@ -146,10 +146,10 @@ unsigned Temp;
 unsigned Key;  // SP_GetCh 返回的数字按键的值
 
 // C_PGA_29dB
-unsigned EnvDet_AttackLevel = 0x05e0;  //音量增大门槛值0610 0600
-unsigned EnvDet_AttackTime = 30;   //音量增大到门槛值后持续时间15 64
-unsigned EnvDet_ReleaseLevel = 0x0340; //音量减小门槛值0300
-unsigned EnvDet_ReleaseTime = 2000;  //音量减小到门槛值后持续时间2500 640
+unsigned EnvDet_AttackLevel = 0x06B0;  //音量增大门槛值0610 0600 23dB // 先测试能进入录音的最小触发阈值
+unsigned EnvDet_AttackTime = 40;   //音量增大到门槛值后持续时间15 40
+unsigned EnvDet_ReleaseLevel = 0x0358; //音量减小门槛值0300 // 再测试能退出录音的最大的安静阈值
+unsigned EnvDet_ReleaseTime = 2400;  //音量减小到门槛值后持续时间2500 400
 
 unsigned PWMorCUR_Flg = 0; // 0:CUR DACOut ,1:PWM Out
 // 1个 block 是 64KB 10秒录音大约是 23KB
@@ -187,6 +187,14 @@ volatile unsigned LowKey_Action = LOW_KEY_ACTION_NONE;  // 下拉 ADC 按键最�
 volatile unsigned UpdateADCLongPressFlag = 0;  // 下拉 ADC 按键模式，标记是否需要进入长按判断逻辑
 
 unsigned RecLenHeadBuf[2];
+volatile unsigned Dbg_EnvStatus;
+volatile unsigned Dbg_EnvData;
+volatile unsigned Dbg_EnvDataMax;
+volatile unsigned Dbg_EnvDataAtAttack;
+volatile unsigned Dbg_EnvDataAtRelease;
+volatile unsigned Dbg_LastLogAttackCount;
+volatile unsigned Dbg_LastLogReleaseCount;
+volatile unsigned Dbg_ResetEnvMax;
 //***************************************************************************************
 // Main Function Area
 //***************************************************************************************
@@ -279,7 +287,7 @@ int main()
 				// 初始化播放录音设置
 				CMPADC_Stop();
 				SACM_A1800_fptr_Initial();
-				USER_A1800_fptr_Volume(9);
+				USER_A1800_fptr_Volume(15);
 				A1800_fptr_Event_Initial();	
 				A1800_fptr_IO_Event_Enable();
 
@@ -431,7 +439,7 @@ void PlayDiSound(void)
     *P_INT_Ctrl &= ~C_IRQ3_ADC;
 
     SACM_A1800_fptr_Initial();
-    USER_A1800_fptr_Volume(9);
+    USER_A1800_fptr_Volume(15);
     A1800_fptr_Event_Initial();
     A1800_fptr_IO_Event_Enable();
 	// VolCompressInitial();
@@ -483,6 +491,16 @@ void EnableEnvDet(void)
     Dbg_ReleaseCount = 0;
     LastAttackCount = 0;
     LastReleaseCount = 0;
+
+	Dbg_EnvStatus = 0;
+	Dbg_EnvData = 0;
+	Dbg_EnvDataMax = 0;
+	Dbg_EnvDataAtAttack = 0;
+	Dbg_EnvDataAtRelease = 0;
+
+	Dbg_LastLogAttackCount = Dbg_AttackCount;
+	Dbg_LastLogReleaseCount = Dbg_ReleaseCount;
+	Dbg_ResetEnvMax = 0;
 }
 void Auto_PrepareRecord(void)
 {
@@ -557,12 +575,12 @@ void Auto_StartPlayRecorded(void)
 
     CMPADC_Stop();
     SACM_A1800_fptr_Initial();
-    USER_A1800_fptr_Volume(9);
+    USER_A1800_fptr_Volume(15);// 作用未知，实测好像不影响录音播放的声音大小
 
     A1800_fptr_Event_Initial();
     A1800_fptr_IO_Event_Enable();
 	// VolCompressInitial();
-	// SetVolCompressLevel(12);
+	// SetVolCompressLevel(12);// 作用未知，注释掉也能变声回播
     SACM_A1800_fptr_Stop();
 
     Block_Addr = ((AUTO_REC_BLOCK + 0) * 65536)/2;// 变声器使用 AUTO_REC_BLOCK
@@ -606,21 +624,54 @@ void CMPADC_Stop(void)
 }
 void EnvDet_Playloop(void)
 {
+    unsigned env;
+
 	if(chk_MIC_voice_flag == 0)
-		return;	
-	// IO Show status	
+		return;
+
+    env = EnvDet_GetEnvelopeData();
+
+    Dbg_EnvData = env;
+
+    if (Dbg_ResetEnvMax)
+    {
+        Dbg_EnvDataMax = 0;
+        Dbg_EnvDataAtAttack = 0;
+        Dbg_EnvDataAtRelease = 0;
+        Dbg_ResetEnvMax = 0;
+    }
+
+    if (env > Dbg_EnvDataMax)
+    {
+        Dbg_EnvDataMax = env;
+    }
+
 	Temp = EnvDet_CheckStatus();
-	if(Temp & C_EnvDet_AttackActive) //start record
+    Dbg_EnvStatus = Temp;
+
+    // 只在真正 attack 计数变化时记录一次
+    if (Dbg_AttackCount != Dbg_LastLogAttackCount)
+    {
+        Dbg_LastLogAttackCount = Dbg_AttackCount;
+        Dbg_EnvDataAtAttack = env;
+    }
+
+    // 只在真正 release 计数变化时记录一次
+    if (Dbg_ReleaseCount != Dbg_LastLogReleaseCount)
+    {
+        Dbg_LastLogReleaseCount = Dbg_ReleaseCount;
+        Dbg_EnvDataAtRelease = env;
+    }
+
+	if(Temp & C_EnvDet_AttackActive)
 	{
-		__asm("setb [0x3005], 1");  //P_IOB_Buffer			0x3005		
-		__asm("setb [0x3001], 7");  //P_IOA_Buffer
-		
+		__asm("setb [0x3005], 1");
+		__asm("setb [0x3001], 7");
 	}
-	else if(Temp & C_EnvDet_ReleaseActive) //Play record
+	else if(Temp & C_EnvDet_ReleaseActive)
 	{
-		__asm("clrb [0x3005], 1");  //P_IOB_Buffer			0x3005
-		__asm("clrb [0x3001], 7");  //P_IOA_Buffer
-		
+		__asm("clrb [0x3005], 1");
+		__asm("clrb [0x3001], 7");
 	}
 }
 
