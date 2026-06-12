@@ -146,10 +146,10 @@ unsigned Temp; // 检测麦克风状态临时变量
 unsigned Key;  // SP_GetCh 返回的数字按键的值
 
 // C_PGA_34dB
-unsigned EnvDet_AttackLevel = 0x06B0;  //音量增大门槛值0610 0600 23dB // 先测试能进入录音的最小触发阈值
-unsigned EnvDet_AttackTime = 40;   //音量增大到门槛值后持续时间15 40
-unsigned EnvDet_ReleaseLevel = 0x0358; //音量减小门槛值0300 // 再测试能退出录音的最大的安静阈值
-unsigned EnvDet_ReleaseTime = 2400;  //音量减小到门槛值后持续时间2500 400
+unsigned EnvDet_AttackLevel = 1470;  //音量增大门槛值0610 0600 23dB // 先测试能进入录音的最小触发阈值
+unsigned EnvDet_AttackTime = 50;   //音量增大到门槛值后持续时间15 40
+unsigned EnvDet_ReleaseLevel = 650; //音量减小门槛值0300 // 再测试能退出录音的最大的安静阈值
+unsigned EnvDet_ReleaseTime = 2000;  //音量减小到门槛值后持续时间2500 400
 
 unsigned PWMorCUR_Flg = 0; // 0:CUR DACOut ,1:PWM Out
 // 1个 block 是 64KB 10秒录音大约是 23KB
