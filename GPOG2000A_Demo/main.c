@@ -234,6 +234,7 @@ int main()
 		if (keydown_rec == KEYDOWN_LOW_IDLE)
 		{
 			// 处理下拉 ADC 按键事件，包括按下、松开、长按等
+			adcKey = Scan_IOA7_ADC_Key();
 		   	Handle_IOA7_ADC_Key();
 		}
 		else if (keydown_rec == KEYDOWN_HIGH_MODE)
@@ -277,6 +278,7 @@ int main()
 				PlayDiSound();
 				// 回归 ADC 按键模式等待用户 长按重新录音或者短按播放
 				keydown_rec = KEYDOWN_LOW_IDLE;
+				Disable_IOA7_DigitalKey();
 				CMPADC_IOA7Key_Init();
 			}
 		}
@@ -287,6 +289,7 @@ int main()
 			{
 				// 长度头不对，不播放，直接回到 ADC 按键等待
 				keydown_rec = KEYDOWN_LOW_IDLE;
+				Disable_IOA7_DigitalKey();
 				CMPADC_IOA7Key_Init();
 			}
 			else
@@ -294,29 +297,7 @@ int main()
 				// 长度头正确，才允许播放
 				keydown_rec = KEYDOWN_LOW_PLAYING;
 
-				// 初始化播放录音设置
-				CMPADC_Stop();//既然干扰，那就不暂停 CMPADC 试试
-				SACM_A1800_fptr_Initial();
-				USER_A1800_fptr_Volume(15);
-				A1800_fptr_Event_Initial();	
-				A1800_fptr_IO_Event_Enable();
-
-				SACM_A1800_fptr_Stop();
-
-				Block_Addr = (LOW_REC_BLOCK * 65536) / 2;// 下拉录音器模式固定使用 LOW_REC_BLOCK
-				Block_Addr = Block_Addr + 0x8000;
-				DVR18_ExtMem_Low = Block_Addr & 0xffff;
-				DVR18_ExtMem_High = Block_Addr >> 16;
-
-				SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
-
-				SACM_VC4_Initial();
-				SACM_VC4_Volume(65535);
-				SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
-				SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);
-				// 奇怪了，播放录音后如果初始化 IOA7 会导致无法播放录音？哪里冲突了吗？
-				// CMPADC_IOA7Key_Init();
-				// Enable_IOA7_DigitalKey();
+				PlayRecord();
 			}
 		}
 		else if (keydown_rec == KEYDOWN_LOW_PLAYING)
@@ -326,57 +307,15 @@ int main()
 			{
 				// Disable_IOA7_DigitalKey(); // 如果禁用数字按键，会导致开机后无法从上拉连接进入高音调？
 				keydown_rec = KEYDOWN_LOW_IDLE;
+				Disable_IOA7_DigitalKey(); // 奇怪了，我禁用，可以正常从开机进入上拉高音调啊！
 				CMPADC_IOA7Key_Init();
 			}
-			Dbg_PlayRaw = *P_CMPADC_Data;
-			// Dbg_Play_IOA_Data = *P_IOA_Data;
-			// Dbg_Play_IOA7_Bit = Dbg_Play_IOA_Data & 0x0080;
-			// Key = SP_GetCh();
-			// Dbg_Play_Key = Key;
-
-			// adcKey = Scan_IOA7_ADC_Key();
-			// Handle_IOA7_ADC_Key();
-
-			// else if (Scan_IOA7_ADC_Key()==ADC_KEY_LOW_PRESS)
-			// {
-			// 	if (UpdateADCLongPressFlag == 0)
-			// 	{
-			// 		UpdateADCLongPressFlag = 1;
-			// 	}
-			// }
-			// if (UpdateADCLongPressFlag)
-			// {
-			// 	Update_ADC_LowKey_Action(Scan_IOA7_ADC_Key());
-
-			// 	// 长按达到 2 秒：不等松手，立刻开始录音
-			// 	if (LowKey_Action == LOW_KEY_ACTION_LONG)
-			// 	{
-			// 		PlayDiSound();
-			// 		Do_IOA7_LowPress_RecorderAction();
-
-			// 		// 处理完长按，清除状态，避免重复触发
-			// 		UpdateADCLongPressFlag = 0;
-			// 		LowKey_State = 0;
-			// 		LowKey_Action = LOW_KEY_ACTION_NONE;
-			// 		Last_IOA7_ADC_Key = Scan_IOA7_ADC_Key();
-			// 	}
-
-			// 	// 短按仍然必须等松手才触发播放
-			// 	if (Scan_IOA7_ADC_Key() == ADC_KEY_NONE)
-			// 	{
-			// 		if (LowKey_Action == LOW_KEY_ACTION_SHORT)
-			// 		{
-			// 			keydown_rec = KEYDOWN_LOW_StartPlayRecorded;
-			// 			UpdateADCLongPressFlag = 0;
-			// 		}
-			// 		else if (LowKey_Action == LOW_KEY_ACTION_BOUNCE)
-			// 		{
-			// 			UpdateADCLongPressFlag = 0;
-			// 		}
-
-			// 		Last_IOA7_ADC_Key = Scan_IOA7_ADC_Key();
-			// 	}
-			// }
+			else
+			{
+				adcKey = Scan_IOA7_ADC_Key_Polling();
+				// Last_IOA7_ADC_Key = ADC_KEY_NONE;
+				Handle_IOA7_ADC_Key();
+			}
 		}
 		else if (keydown_rec == KEYDOWN_HIGH_MODE) // 上拉按键模式，自动监听式变声器
 		{
@@ -768,6 +707,22 @@ unsigned Scan_IOA7_ADC_Key(void)
     Dbg_IOA7_ADC_Key = key;
     return key;
 }
+unsigned Scan_IOA7_ADC_Key_Polling(void)
+{
+    unsigned raw = *P_CMPADC_Data;
+    unsigned key = ADC_KEY_NONE;
+	// 下拉模式时未按下是1100，按下时480
+    if (raw < IOA7_ADC_LOW_PRESS_TH)
+    {
+        key = ADC_KEY_LOW_PRESS;
+    }
+    else
+    {
+        key = ADC_KEY_NONE;
+    }
+
+    return key;
+}
 void Update_ADC_LowKey_Action(unsigned adcKey)
 {
     unsigned now;
@@ -836,8 +791,6 @@ void Handle_IOA7_ADC_Key(void)
     // if (KeyBusy || AutoBusy)
     //     return;
 
-	adcKey = Scan_IOA7_ADC_Key();
-
 	if (UpdateADCLongPressFlag)
 	{
 		Update_ADC_LowKey_Action(adcKey);
@@ -862,7 +815,15 @@ void Handle_IOA7_ADC_Key(void)
 		{
 			if (LowKey_Action == LOW_KEY_ACTION_SHORT)
 			{
-				keydown_rec = KEYDOWN_LOW_StartPlayRecorded;
+				if (keydown_rec == KEYDOWN_LOW_PLAYING)
+				{
+					// 如果是正在播放录音，则直接重新播放录音，不用准备录音、检查录音长度头
+					PlayRecord();
+				}
+				else
+				{
+					keydown_rec = KEYDOWN_LOW_StartPlayRecorded;
+				}
 				UpdateADCLongPressFlag = 0;
 			}
 			else if (LowKey_Action == LOW_KEY_ACTION_BOUNCE)
@@ -1017,4 +978,33 @@ unsigned Check_Record_10s_Length(void)
     }
 
     return 0;
+}
+
+void PlayRecord(void)
+{
+	WatchdogClear();
+
+    // 初始化播放录音设置
+	CMPADC_Stop();//既然干扰，那就不暂停 CMPADC 试试
+	SACM_A1800_fptr_Initial();
+	USER_A1800_fptr_Volume(15);
+	A1800_fptr_Event_Initial();	
+	A1800_fptr_IO_Event_Enable();
+
+	SACM_A1800_fptr_Stop();
+	SACM_VC4_Stop();
+	SACM_VC4_ServiceLoop();
+	System_ServiceLoop();
+
+	Block_Addr = (LOW_REC_BLOCK * 65536) / 2;// 下拉录音器模式固定使用 LOW_REC_BLOCK
+	Block_Addr = Block_Addr + 0x8000;
+	DVR18_ExtMem_Low = Block_Addr & 0xffff;
+	DVR18_ExtMem_High = Block_Addr >> 16;
+
+	SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
+
+	SACM_VC4_Initial();
+	SACM_VC4_Volume(65535);
+	SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
+	SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);
 }
