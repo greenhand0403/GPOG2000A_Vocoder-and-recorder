@@ -126,8 +126,8 @@ F_CMPADC_IOA7Key_Init:
 	[P_CMPADC_Status] = R1;
 
 	// IOA7 ADC 按键不需要 PGA，先关闭 PGA，避免麦克风链路影响
-	R1 = 0x0000;
-	[P_PGA_Ctrl] = R1;
+	// R1 = 0x0000;
+	// [P_PGA_Ctrl] = R1;
 
 	R1 = [P_INT_Ctrl];
 	R1 |= C_IRQ3_ADC | C_IRQ0_TMA;

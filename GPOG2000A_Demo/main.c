@@ -140,12 +140,12 @@ int EchoGainIdx;
 int ADC_FIR_Type;
 int DAC_FIR_Type;
 // unsigned A1800_Idx = 0;
-unsigned long Block_Addr = 0; 
+unsigned long Block_Addr = 0; // 存储数据块的地址
 int chk_MIC_voice_flag = 0;  // 判断是否需要检测麦克风输入，中断相关
-unsigned Temp;
+unsigned Temp; // 检测麦克风状态临时变量
 unsigned Key;  // SP_GetCh 返回的数字按键的值
 
-// C_PGA_29dB
+// C_PGA_34dB
 unsigned EnvDet_AttackLevel = 0x06B0;  //音量增大门槛值0610 0600 23dB // 先测试能进入录音的最小触发阈值
 unsigned EnvDet_AttackTime = 40;   //音量增大到门槛值后持续时间15 40
 unsigned EnvDet_ReleaseLevel = 0x0358; //音量减小门槛值0300 // 再测试能退出录音的最大的安静阈值
@@ -187,6 +187,7 @@ volatile unsigned LowKey_Action = LOW_KEY_ACTION_NONE;  // 下拉 ADC 按键最�
 volatile unsigned UpdateADCLongPressFlag = 0;  // 下拉 ADC 按键模式，标记是否需要进入长按判断逻辑
 
 unsigned RecLenHeadBuf[2];
+// 调试变量，用于找出合适的 attack level 和 release level
 volatile unsigned Dbg_EnvStatus;
 volatile unsigned Dbg_EnvData;
 volatile unsigned Dbg_EnvDataMax;
@@ -195,6 +196,12 @@ volatile unsigned Dbg_EnvDataAtRelease;
 volatile unsigned Dbg_LastLogAttackCount;
 volatile unsigned Dbg_LastLogReleaseCount;
 volatile unsigned Dbg_ResetEnvMax;
+
+unsigned adcKey; // 下拉 ADC 按键的检测值
+volatile unsigned Dbg_Play_IOA_Data;
+volatile unsigned Dbg_Play_IOA7_Bit;
+volatile unsigned Dbg_Play_Key;
+volatile unsigned Dbg_PlayRaw;
 //***************************************************************************************
 // Main Function Area
 //***************************************************************************************
@@ -226,14 +233,17 @@ int main()
 	{
 		if (keydown_rec == KEYDOWN_LOW_IDLE)
 		{
+			// 处理下拉 ADC 按键事件，包括按下、松开、长按等
 		   	Handle_IOA7_ADC_Key();
 		}
 		else if (keydown_rec == KEYDOWN_HIGH_MODE)
 		{
+			// 处理上拉数字按键事件
 			Handle_Key();
 		}
 		else if (keydown_rec == KEYDOWN_HIGH_WAIT_RELEASE)
 		{
+			// 处理上拉数字按键等待释放事件
 			Handle_HighWaitRelease();
 		}
 
@@ -245,7 +255,7 @@ int main()
 		// 下拉按键模式的长按录音、短按播放的状态机
 		if(keydown_rec == KEYDOWN_LOW_RECORDING)
 		{
-			// 下拉模式长按会进入正在录音状态，录满时间后自动停止
+			// 下拉模式长按，进入正在录音状态，录满时间后自动停止
 			if (g_tma64Ticks >= MAX_REC_TIME)
 			{
 				// 停止录音
@@ -285,7 +295,7 @@ int main()
 				keydown_rec = KEYDOWN_LOW_PLAYING;
 
 				// 初始化播放录音设置
-				CMPADC_Stop();
+				CMPADC_Stop();//既然干扰，那就不暂停 CMPADC 试试
 				SACM_A1800_fptr_Initial();
 				USER_A1800_fptr_Volume(15);
 				A1800_fptr_Event_Initial();	
@@ -304,6 +314,9 @@ int main()
 				SACM_VC4_Volume(65535);
 				SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
 				SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);
+				// 奇怪了，播放录音后如果初始化 IOA7 会导致无法播放录音？哪里冲突了吗？
+				// CMPADC_IOA7Key_Init();
+				// Enable_IOA7_DigitalKey();
 			}
 		}
 		else if (keydown_rec == KEYDOWN_LOW_PLAYING)
@@ -315,6 +328,55 @@ int main()
 				keydown_rec = KEYDOWN_LOW_IDLE;
 				CMPADC_IOA7Key_Init();
 			}
+			Dbg_PlayRaw = *P_CMPADC_Data;
+			// Dbg_Play_IOA_Data = *P_IOA_Data;
+			// Dbg_Play_IOA7_Bit = Dbg_Play_IOA_Data & 0x0080;
+			// Key = SP_GetCh();
+			// Dbg_Play_Key = Key;
+
+			// adcKey = Scan_IOA7_ADC_Key();
+			// Handle_IOA7_ADC_Key();
+
+			// else if (Scan_IOA7_ADC_Key()==ADC_KEY_LOW_PRESS)
+			// {
+			// 	if (UpdateADCLongPressFlag == 0)
+			// 	{
+			// 		UpdateADCLongPressFlag = 1;
+			// 	}
+			// }
+			// if (UpdateADCLongPressFlag)
+			// {
+			// 	Update_ADC_LowKey_Action(Scan_IOA7_ADC_Key());
+
+			// 	// 长按达到 2 秒：不等松手，立刻开始录音
+			// 	if (LowKey_Action == LOW_KEY_ACTION_LONG)
+			// 	{
+			// 		PlayDiSound();
+			// 		Do_IOA7_LowPress_RecorderAction();
+
+			// 		// 处理完长按，清除状态，避免重复触发
+			// 		UpdateADCLongPressFlag = 0;
+			// 		LowKey_State = 0;
+			// 		LowKey_Action = LOW_KEY_ACTION_NONE;
+			// 		Last_IOA7_ADC_Key = Scan_IOA7_ADC_Key();
+			// 	}
+
+			// 	// 短按仍然必须等松手才触发播放
+			// 	if (Scan_IOA7_ADC_Key() == ADC_KEY_NONE)
+			// 	{
+			// 		if (LowKey_Action == LOW_KEY_ACTION_SHORT)
+			// 		{
+			// 			keydown_rec = KEYDOWN_LOW_StartPlayRecorded;
+			// 			UpdateADCLongPressFlag = 0;
+			// 		}
+			// 		else if (LowKey_Action == LOW_KEY_ACTION_BOUNCE)
+			// 		{
+			// 			UpdateADCLongPressFlag = 0;
+			// 		}
+
+			// 		Last_IOA7_ADC_Key = Scan_IOA7_ADC_Key();
+			// 	}
+			// }
 		}
 		else if (keydown_rec == KEYDOWN_HIGH_MODE) // 上拉按键模式，自动监听式变声器
 		{
@@ -620,7 +682,7 @@ void Auto_StartPlayRecorded(void)
 void CMPADC_Stop(void)
 {
 	*P_INT_Ctrl &= ~C_IRQ3_ADC;
-	*P_INT_Status = C_IRQ3_ADC;
+	// *P_INT_Status = C_IRQ3_ADC; // 注释掉无影响？还能继续播放录音
 }
 void EnvDet_Playloop(void)
 {
@@ -764,14 +826,12 @@ void Update_ADC_LowKey_Action(unsigned adcKey)
 // 上拉模式，检测到按下则切换为数字 IO 模式；下拉模式，按下则处理 IOA7 ADC 按键的长按和短按判断逻辑
 void Handle_IOA7_ADC_Key(void)
 {
-    unsigned adcKey;
-
-	if (keydown_rec != KEYDOWN_LOW_IDLE)
-		return;
+	// if (keydown_rec != KEYDOWN_LOW_IDLE)
+	// 	return;
 
     // 如果是上拉按键模式的音量检测状态机，则不使用ADC按键功能，避免和 EnvDet / 自动录音 / 自动播放抢 CMPADC
-    if (AutoState != AUTO_IDLE)
-        return;
+    // if (AutoState != AUTO_IDLE)
+    //     return;
 	// 避免按一次按键响应两次处理事件
     // if (KeyBusy || AutoBusy)
     //     return;
@@ -829,33 +889,6 @@ void Handle_IOA7_ADC_Key(void)
 		// 如果是上拉连接方式，则直接进入等待用户松手模式才会进入高音调模式同时退出ADC按键功能模式
 		else if (adcKey == ADC_KEY_HIGH_PRESS)
 		{
-			// 无中间状态的情况。此时是永久退出 IOA7 ADC 按键模式，将 CMPADC 交给麦克风静音检测使用
-			// keydown_rec = KEYDOWN_HIGH_MODE;
-
-			// KeyBusy = 1;
-
-			// PlayDiSound();
-
-			// EffectMode = KeyCount;
-			
-			// if (KeyCount < MAX_SOUND_EFFECT)
-			// {
-			// 	KeyCount++;
-
-			// 	AutoState = AUTO_IDLE;
-			// 	Auto_PrepareRecord();
-			// 	AutoState = AUTO_WAIT_ATTACK;
-			// }
-			// // 这个分支为什么会影响上拉按键首次进入高音调模式？
-			// else
-			// {
-			// 	PlayDiSound();
-			// 	KeyCount = 0;
-			// 	Auto_StopWorkMode();
-			// }
-
-			// KeyBusy = 0;
-
 			// 新增一个中间状态，避免上拉按键模式时用户长按跳到低音调模式
 			keydown_rec = KEYDOWN_HIGH_WAIT_RELEASE;
 	
@@ -954,7 +987,6 @@ void Do_IOA7_LowPress_RecorderAction(void)
 // void Wait_TMA64_Ticks(unsigned ticks)
 // {
 //     g_tma64Ticks = 0;
-
 //     while (g_tma64Ticks < ticks)
 //     {
 //         // SACM_DVR1800_ServiceLoop();
