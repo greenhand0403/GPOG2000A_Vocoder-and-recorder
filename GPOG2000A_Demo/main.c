@@ -145,11 +145,11 @@ int chk_MIC_voice_flag = 0;  // 判断是否需要检测麦克风输入，中断
 unsigned Temp; // 检测麦克风状态临时变量
 unsigned Key;  // SP_GetCh 返回的数字按键的值
 
-// C_PGA_34dB
-unsigned EnvDet_AttackLevel = 1470;  //音量增大门槛值0610 0600 23dB // 先测试能进入录音的最小触发阈值
-unsigned EnvDet_AttackTime = 50;   //音量增大到门槛值后持续时间15 40
-unsigned EnvDet_ReleaseLevel = 650; //音量减小门槛值0300 // 再测试能退出录音的最大的安静阈值
-unsigned EnvDet_ReleaseTime = 2000;  //音量减小到门槛值后持续时间2500 400
+// C_PGA_42dB
+unsigned EnvDet_AttackLevel = 2950;  //音量增大门槛值0610 0600 23dB // 先测试能进入录音的最小触发阈值，最大 3000 安全 都往小调下次
+unsigned EnvDet_AttackTime = 100;   //音量增大到门槛值后持续时间15 40
+unsigned EnvDet_ReleaseLevel = 1200; //音量减小门槛值0300 // 再测试能退出录音的最大的安静阈值 5000 足够安全 1100
+unsigned EnvDet_ReleaseTime = 1500;  //音量减小到门槛值后持续时间2500 400 1800
 
 unsigned PWMorCUR_Flg = 0; // 0:CUR DACOut ,1:PWM Out
 // 1个 block 是 64KB 10秒录音大约是 23KB
@@ -254,7 +254,7 @@ int main()
 		SACM_DVR1800_ServiceLoop();
 		
 		// 下拉按键模式的长按录音、短按播放的状态机
-		if(keydown_rec == KEYDOWN_LOW_RECORDING)
+ 		if(keydown_rec == KEYDOWN_LOW_RECORDING)
 		{
 			// 下拉模式长按，进入正在录音状态，录满时间后自动停止
 			if (g_tma64Ticks >= MAX_REC_TIME)
@@ -355,10 +355,13 @@ void Handle_Key(void)
 	
 		if (KeyCount < MAX_SOUND_EFFECT)
 		{
+			// 只有高音调模式时才会擦除
+			if (EffectMode == 0)
+			{
+				Auto_PrepareRecord();
+				AutoState = AUTO_WAIT_ATTACK;
+			}
 			KeyCount++;
-			AutoState = AUTO_IDLE;
-			Auto_PrepareRecord();
-			AutoState = AUTO_WAIT_ATTACK;
 		}
 		else
 		{
@@ -406,7 +409,7 @@ void Auto_StateMachine(void)
 			break;
 
 		case AUTO_WAIT_REC_END:
-			SACM_DVR1800_ServiceLoop();
+			// SACM_DVR1800_ServiceLoop();
 
 			if ((SACM_DVR1800_Status() & 0x01) == 0)
 			{
@@ -522,14 +525,14 @@ void Auto_PrepareRecord(void)
     SACM_DVR1800_Stop();
 
     // 先擦除录音区
-    __asm("INT OFF");
+    // __asm("INT OFF");
 
-    MoveSPIDriverToRAM_0();
-    MoveSPIDriverToRAM_2();
-    SPI_Flash_Block_Erase(R_REC_block + 0);// 变声器使用 block 6
-    SPI_Flash_Block_Erase(R_REC_block + 1);
+    // MoveSPIDriverToRAM_0();
+    // MoveSPIDriverToRAM_2();
+    // SPI_Flash_Block_Erase(R_REC_block + 0);// 变声器使用 block 6
+    // SPI_Flash_Block_Erase(R_REC_block + 1);
 
-    __asm("INT FIQ,IRQ");
+    // __asm("INT FIQ,IRQ");
 
     // 再初始化 DVR1800
     MoveSPIDriverToRAM_0();
