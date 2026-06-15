@@ -59,6 +59,10 @@
 
 #define MAX_SOUND_EFFECT 3  // 3种有效的变声模式高音调 低音调 机器人音调
 #define DI_SOUND_TIMEOUT_COUNT   60000UL  // 下拉按键自动录音的超时时间，单位：微秒
+
+#define KEY_CONN_UNKNOWN 0
+#define KEY_CONN_HIGH    1
+#define KEY_CONN_LOW     2
 //
 // RTVC mode definition
 //
@@ -91,6 +95,8 @@
 #define C_EnvDet_ReleaseActive			0x0004
 #define LOW_REC_BLOCK   5   // 下拉录音机起始block
 #define AUTO_REC_BLOCK  8   // 上拉自动监听变声器起始block
+
+#define HIGH_KEY_RELEASE_CONFIRM 3
 //**************************************************************************
 // External Function Declaration
 //**************************************************************************
@@ -147,7 +153,7 @@ unsigned Key;  // SP_GetCh 返回的数字按键的值
 
 // C_PGA_42dB
 unsigned EnvDet_AttackLevel = 2950;  //音量增大门槛值0610 0600 23dB // 先测试能进入录音的最小触发阈值，最大 3000 安全 都往小调下次
-unsigned EnvDet_AttackTime = 120;   //音量增大到门槛值后持续时间15 40
+unsigned EnvDet_AttackTime = 180;   //音量增大到门槛值后持续时间15 40
 unsigned EnvDet_ReleaseLevel = 1200; //音量减小门槛值0300 // 再测试能退出录音的最大的安静阈值 5000 足够安全 1100
 unsigned EnvDet_ReleaseTime = 1500;  //音量减小到门槛值后持续时间2500 400 1800
 
@@ -202,6 +208,14 @@ volatile unsigned Dbg_Play_IOA_Data;
 volatile unsigned Dbg_Play_IOA7_Bit;
 volatile unsigned Dbg_Play_Key;
 volatile unsigned Dbg_PlayRaw;
+// 开机首次按键按下后锁存为按键的上拉连接模式或者按键的下拉连接模式
+// 上拉连接模式：锁死数字按键只能短按
+// 下拉连接模式：锁死 ADC 按键模式，短按播放、长按录音，在录音期间可以再次短按播放、长按录音
+volatile unsigned KeyConnMode = KEY_CONN_UNKNOWN;
+// 上拉按键锁存
+volatile unsigned HighKeyLock = 0;
+volatile unsigned HighKeyReleaseCnt = 0;
+unsigned waitCnt = 0;
 //***************************************************************************************
 // Main Function Area
 //***************************************************************************************
@@ -254,7 +268,7 @@ int main()
 		SACM_DVR1800_ServiceLoop();
 		
 		// 下拉按键模式的长按录音、短按播放的状态机
- 		if(keydown_rec == KEYDOWN_LOW_RECORDING)
+		if ((KeyConnMode == KEY_CONN_LOW) && (keydown_rec == KEYDOWN_LOW_RECORDING))
 		{
 			// 下拉模式长按，进入正在录音状态，录满时间后自动停止
 			if (g_tma64Ticks >= MAX_REC_TIME)
@@ -269,6 +283,14 @@ int main()
 				{
 					SACM_DVR1800_ServiceLoop();
 					System_ServiceLoop();
+					// 超时保护
+					waitCnt++;
+
+					if (waitCnt > 60000)
+					{
+						SACM_DVR1800_Stop();
+						break;
+					}
 				}
 				// 再播放滴声提示，里面有自动判断等待播放完滴声提示
 				PlayDiSound();
@@ -280,7 +302,8 @@ int main()
 				CMPADC_IOA7Key_Init();
 			}
 		}
-		else if (keydown_rec == KEYDOWN_LOW_StartPlayRecorded)
+		else if ((KeyConnMode == KEY_CONN_LOW) && 
+         (keydown_rec == KEYDOWN_LOW_StartPlayRecorded))
 		{
 			// 短按播放前，先检查录音长度头是否为 10 秒：59B2 0000
 			if (Check_Record_10s_Length() == 0)
@@ -298,7 +321,8 @@ int main()
 				PlayRecord();
 			}
 		}
-		else if (keydown_rec == KEYDOWN_LOW_PLAYING)
+		else if ((KeyConnMode == KEY_CONN_LOW) && 
+         (keydown_rec == KEYDOWN_LOW_PLAYING))
 		{
 			// 等待播放录音完毕，重新允许IOA7 ADC按键，同时禁用 数字按键
 			if ((SACM_VC4_Status() & 0x01) == 0)
@@ -310,6 +334,7 @@ int main()
 			}
 			else
 			{
+				// 下拉模式播放录音期间，可以再次短按重新播放或者长按重新录音
 				adcKey = Scan_IOA7_ADC_Key_Polling();
 				// Last_IOA7_ADC_Key = ADC_KEY_NONE;
 				Handle_IOA7_ADC_Key();
@@ -339,11 +364,42 @@ int main()
 void Handle_Key(void)
 {
 	Key = SP_GetCh();
+	/*
+       如果已经处理过一次按下，则必须等物理松手后才允许下一次。
+       注意：锁定期间仍然读取 SP_GetCh()，目的是清掉滴声播放期间积累的伪按键事件。
+    */
+	if (HighKeyLock)
+	{
+		if (IsHighKeyPressedRaw())
+		{
+			HighKeyReleaseCnt = 0;
+		}
+		else
+		{
+			HighKeyReleaseCnt++;
+
+			if (HighKeyReleaseCnt >= HIGH_KEY_RELEASE_CONFIRM)
+			{
+				HighKeyLock = 0;
+				HighKeyReleaseCnt = 0;
+			}
+		}
+
+		return;
+	}
+
 	if ((Key & 0x0080) != 0)
 	{
 		// 自动监听式变声器模式
 		if (KeyBusy)
 			return;
+
+		/*
+			一旦确认本次按键有效，立刻锁住。
+			后面即使 PlayDiSound() 期间又扫描出 0x0080，也会被锁定逻辑吃掉。
+		*/
+		HighKeyLock = 1;
+		HighKeyReleaseCnt = 0;
 
 		KeyBusy = 1;
 
@@ -396,6 +452,7 @@ void Auto_StateMachine(void)
 			break;
 
 		case AUTO_RECORDING:
+			// TODO: 录音期间
 			// 情况1：用户提前停止说话，EnvDet 检测到 release
 			// 情况2：用户一直说话/一直播放音乐，达到最长 10 秒，强制视为 release
 			if ((Dbg_ReleaseCount != LastReleaseCount)||(g_tma64Ticks >= MAX_REC_TIME))
@@ -452,6 +509,7 @@ void PlayDiSound(void)
 	// VolCompressInitial();
 	// SetVolCompressLevel(12);
     SACM_A1800_fptr_Stop();
+	SACM_VC4_Stop();
 
     // A1800_Idx = 0;
     USER_A1800_fptr_SetStartAddr(0);
@@ -462,7 +520,7 @@ void PlayDiSound(void)
     SACM_VC4_AD_FIRType(ADC_FIR_Type);
     SACM_VC4_DA_FIRType(DAC_FIR_Type);
 	// SACM_VC4_Volume_Control(C_Volume_Control_Enable);
-    SACM_VC4_Volume(65535);
+    SACM_VC4_Volume(15535);
 
     VC_Mode = VC4_SHIFT_PITCH_MODE;
     SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
@@ -481,7 +539,8 @@ void PlayDiSound(void)
             break;
         }
     }
-	Key = SP_GetCh();
+	// 调用一下使能数字按键，清除按键状态，避免重复触发按键事件
+	Enable_IOA7_DigitalKey();
 }
 // 开启麦克风检测音量功能，注意，与 ADC 按键互斥
 void EnableEnvDet(void)
@@ -788,6 +847,14 @@ void Update_ADC_LowKey_Action(unsigned adcKey)
 // 上拉模式，检测到按下则切换为数字 IO 模式；下拉模式，按下则处理 IOA7 ADC 按键的长按和短按判断逻辑
 void Handle_IOA7_ADC_Key(void)
 {
+	// 一旦进入上拉模式，后面无论 ADC 读到什么，都不可能再触发下拉长按录音
+	if (KeyConnMode == KEY_CONN_HIGH)
+	{
+		UpdateADCLongPressFlag = 0;
+		LowKey_State = 0;
+		LowKey_Action = LOW_KEY_ACTION_NONE;
+		return;
+	}
 	// if (keydown_rec != KEYDOWN_LOW_IDLE)
 	// 	return;
 
@@ -849,7 +916,13 @@ void Handle_IOA7_ADC_Key(void)
 		// 判断如果是下拉连接方式，则需要给个标志位，再次判断是长按还是短按
         if (adcKey == ADC_KEY_LOW_PRESS)
         {
-			if (UpdateADCLongPressFlag == 0)
+			if (KeyConnMode == KEY_CONN_UNKNOWN)
+			{
+				KeyConnMode = KEY_CONN_LOW;
+			}
+
+			// if (UpdateADCLongPressFlag == 0)
+			if (KeyConnMode == KEY_CONN_LOW)
 			{
 				UpdateADCLongPressFlag = 1;
 			}
@@ -857,6 +930,8 @@ void Handle_IOA7_ADC_Key(void)
 		// 如果是上拉连接方式，则直接进入等待用户松手模式才会进入高音调模式同时退出ADC按键功能模式
 		else if (adcKey == ADC_KEY_HIGH_PRESS)
 		{
+			KeyConnMode = KEY_CONN_HIGH;
+
 			// 新增一个中间状态，避免上拉按键模式时用户长按跳到低音调模式
 			keydown_rec = KEYDOWN_HIGH_WAIT_RELEASE;
 	
@@ -925,6 +1000,12 @@ void Handle_HighWaitRelease(void)
 }
 void Do_IOA7_LowPress_RecorderAction(void)
 {
+	if (KeyConnMode != KEY_CONN_LOW)
+        return;
+	// TODO: 程序有可能从正在播放的状态进入这个函数吗？
+    // if (keydown_rec != KEYDOWN_LOW_IDLE)
+    //     return;
+
 	R_REC_block = LOW_REC_BLOCK;
 	// 擦除录音数据
 	SACM_DVR1800_Stop();
@@ -950,6 +1031,8 @@ void Do_IOA7_LowPress_RecorderAction(void)
 	
 	SACM_DVR1800_Rec(RecMonitorOff, Mic, DVR1800_BIT_RATE_16K);
 	keydown_rec = KEYDOWN_LOW_RECORDING;
+	// 开启超时保护
+	waitCnt = 0;
 }
 // void Wait_TMA64_Ticks(unsigned ticks)
 // {
@@ -1013,4 +1096,8 @@ void PlayRecord(void)
 	SACM_VC4_Volume(65535);
 	SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
 	SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);
+}
+unsigned IsHighKeyPressedRaw(void)
+{
+    return ((*P_IOA_Data) & 0x0080) != 0;
 }
