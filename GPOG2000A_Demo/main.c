@@ -152,10 +152,10 @@ unsigned Temp; // 检测麦克风状态临时变量
 unsigned Key;  // SP_GetCh 返回的数字按键的值
 
 // C_PGA_42dB
-unsigned EnvDet_AttackLevel = 2950;  //音量增大门槛值0610 0600 23dB // 先测试能进入录音的最小触发阈值，最大 3000 安全 都往小调下次
-unsigned EnvDet_AttackTime = 180;   //音量增大到门槛值后持续时间15 40
-unsigned EnvDet_ReleaseLevel = 1200; //音量减小门槛值0300 // 再测试能退出录音的最大的安静阈值 5000 足够安全 1100
-unsigned EnvDet_ReleaseTime = 1500;  //音量减小到门槛值后持续时间2500 400 1800
+unsigned EnvDet_AttackLevel = 2910;  //音量增大门槛值0610 0600 23dB // 先测试能进入录音的最小触发阈值，最大 3000 安全 都往小调下次
+unsigned EnvDet_AttackTime = 80;   //音量增大到门槛值后持续时间15 40
+unsigned EnvDet_ReleaseLevel = 900; //音量减小门槛值0300 // 再测试能退出录音的最大的安静阈值 5000 足够安全 1100
+unsigned EnvDet_ReleaseTime = 1000;  //音量减小到门槛值后持续时间2500 400 1800
 
 unsigned PWMorCUR_Flg = 0; // 0:CUR DACOut ,1:PWM Out
 // 1个 block 是 64KB 10秒录音大约是 23KB
@@ -403,6 +403,16 @@ void Handle_Key(void)
 
 		KeyBusy = 1;
 
+		/*
+			关键新增：
+			只要用户在上拉模式再次按键，就先强制打断当前自动监听流程。
+			包括 WAIT_ATTACK / RECORDING / WAIT_REC_END / PLAYING。
+		*/
+		if (AutoState != AUTO_IDLE)
+		{
+			Auto_AbortCurrentWork();
+		}
+
 		PlayDiSound();
 
 		EffectMode = KeyCount;
@@ -487,6 +497,11 @@ void Auto_StateMachine(void)
 				Auto_PrepareRecord();
 				AutoState = AUTO_WAIT_ATTACK;
 			}
+			// 自动变声播放期间也允许按键打断然后进入下一个工作模式
+			else if (keydown_rec == KEYDOWN_HIGH_MODE)
+			{
+				Handle_Key();
+			}
 			break;
 
 		default:
@@ -540,7 +555,10 @@ void PlayDiSound(void)
         }
     }
 	// 调用一下使能数字按键，清除按键状态，避免重复触发按键事件
-	Enable_IOA7_DigitalKey();
+	if (KeyConnMode == KEY_CONN_HIGH)
+	{
+		Enable_IOA7_DigitalKey();
+	}
 }
 // 开启麦克风检测音量功能，注意，与 ADC 按键互斥
 void EnableEnvDet(void)
@@ -1100,4 +1118,62 @@ void PlayRecord(void)
 unsigned IsHighKeyPressedRaw(void)
 {
     return ((*P_IOA_Data) & 0x0080) != 0;
+}
+void Auto_AbortCurrentWork(void)
+{
+    unsigned abortWait;
+
+    /*
+       1. 先禁止 EnvDet，避免刚打断时又产生 attack/release 事件
+    */
+    chk_MIC_voice_flag = 0;
+    EnvDet_Stop();
+    CMPADC_Stop();
+
+    /*
+       2. 如果正在录音或正在等待录音结束，先停止 DVR1800
+    */
+    if ((AutoState == AUTO_RECORDING) || (AutoState == AUTO_WAIT_REC_END))
+    {
+        SACM_DVR1800_Stop();
+
+        abortWait = 0;
+
+        while ((SACM_DVR1800_Status() & 0x01) != 0)
+        {
+            SACM_DVR1800_ServiceLoop();
+            System_ServiceLoop();
+
+            abortWait++;
+
+            if (abortWait > 60000)
+            {
+                SACM_DVR1800_Stop();
+                break;
+            }
+        }
+    }
+    else
+    {
+        SACM_DVR1800_Stop();
+    }
+
+    /*
+       3. 如果正在播放变声，也要停掉 VC4/A1800
+    */
+    SACM_VC4_Stop();
+    SACM_A1800_fptr_Stop();
+
+    /*
+       4. 清自动监听相关状态
+    */
+    g_tmaDiv = 0;
+    g_tma64Ticks = 0;
+
+    Dbg_AttackCount = 0;
+    Dbg_ReleaseCount = 0;
+    LastAttackCount = 0;
+    LastReleaseCount = 0;
+
+    AutoState = AUTO_IDLE;
 }
