@@ -22,27 +22,44 @@
 //**************************************************************************
 // Contant Defintion Area
 //**************************************************************************
-// 上拉按键时自动监听模式的状态定义
-#define AUTO_IDLE           0   // 上拉模式，未启动自动监听
-#define AUTO_WAIT_ATTACK    1   // 上拉模式，等待声音触发
-#define AUTO_RECORDING      2   // 上拉模式，正在录音
-#define AUTO_WAIT_REC_END   3   // 上拉模式，等待录音真正结束
-#define AUTO_PLAYING        4   // 上拉模式，正在播放刚才录音
-// IOA7 ADC 按键状态定义
-#define ADC_KEY_NONE       0
-#define ADC_KEY_HIGH_PRESS 1   // 上拉连接：按下约 2.7V
-#define ADC_KEY_LOW_PRESS  2   // 下拉连接：按下约 0.5V
-// 为ADC下拉按键自动录音并播放设计的四种状态
+// 变声和录音业务参数
+#define MAX_REC_TIME (64*10)  // 上拉自动监听变声和下拉按键自动录音的 最长时间 换算从录音长度头就是 59b2 0000 低地址 高地址 换算后是压缩后的 22962 byte 大约 23 KB
+#define REC_LEN_10S_LOW_WORD   0x59B2
+#define REC_LEN_10S_HIGH_WORD  0x0000
+#define MAX_SOUND_EFFECT 3  // 3种有效的变声模式高音调 低音调 机器人音调
+// 触发自动监听式变声器的参数
+#define ENVDET_ATTACK_LEVEL    2910
+#define ENVDET_ATTACK_TIME     80
+#define ENVDET_RELEASE_LEVEL   1250
+#define ENVDET_RELEASE_TIME    6500
+#define LOW_REC_BLOCK   5   // 下拉录音机起始block
+#define AUTO_REC_BLOCK  8   // 上拉自动监听变声器起始block
+
+// 系统工作状态定义
 #define SYS_ADC_IDLE              0 // 未知上拉还是下拉 未按下任何按键 空闲
 #define SYS_LOW_RECORDING     1   // 下拉模式，正在录音
 #define SYS_LOW_PLAYING       2		// 下拉模式，正在播放刚才录音
 #define SYS_HIGH_DIGITAL_MODE    3  // 下拉模式切换为上拉模式，退出ADC按键模式，变成数字按键上拉按键
 #define SYS_LOW_PENDING_PLAY    4  // 下拉模式，手动按键触发播放刚才录音
 #define SYS_HIGH_WAIT_RELEASE 5  // 进入上拉模式，等待松开按键时才触发进入上拉高音调变调模式
+// 开机后首次按键确定连接状态定义
+#define KEY_CONN_UNKNOWN 0
+#define KEY_CONN_HIGH    1
+#define KEY_CONN_LOW     2
+// IOA7 ADC 按键状态定义
+#define ADC_KEY_NONE       0
+#define ADC_KEY_HIGH_PRESS 1   // 上拉连接：按下约 2.7V
+#define ADC_KEY_LOW_PRESS  2   // 下拉连接：按下约 0.5V
+// 正常ADC值1104左右，上拉模式按下时变为2514，下拉模式按下时变为484
+#define IOA7_ADC_LOW_PRESS_TH      800  // ADC按键按下时小于此值，认为处于下拉模式且按下
+#define IOA7_ADC_HIGH_PRESS_TH     1800 // ADC按键按下时大于此值，认为处于上拉模式且按下
 
-#define MAX_REC_TIME (64*10)  // 上拉自动监听变声和下拉按键自动录音的 最长时间 换算从录音长度头就是 59b2 0000 低地址 高地址 换算后是压缩后的 22962 byte 大约 23 KB
-#define REC_LEN_10S_LOW_WORD   0x59B2
-#define REC_LEN_10S_HIGH_WORD  0x0000
+// 上拉按键时自动监听模式的状态定义
+#define AUTO_IDLE           0   // 上拉模式，未启动自动监听
+#define AUTO_WAIT_ATTACK    1   // 上拉模式，等待声音触发
+#define AUTO_RECORDING      2   // 上拉模式，正在录音
+#define AUTO_WAIT_REC_END   3   // 上拉模式，等待录音真正结束
+#define AUTO_PLAYING        4   // 上拉模式，正在播放刚才录音
 
 #define ADC_LOW_KEY_LONG_TICKS       128      // 下拉按键的长按约 2 秒
 #define ADC_LOW_KEY_SHORT_MIN_TICKS  3       // 下拉按键小于这个认为是按键抖动
@@ -51,23 +68,11 @@
 #define LOW_KEY_ACTION_SHORT   1  // 下拉按键的短按状态
 #define LOW_KEY_ACTION_LONG    2  // 下拉按键的长按状态
 #define LOW_KEY_ACTION_BOUNCE  3  // 下拉按键的抖动状态
-// 正常ADC值1104左右，上拉模式按下时变为2514，下拉模式按下时变为484
-#define IOA7_ADC_LOW_PRESS_TH      800  // ADC按键按下时小于此值，认为处于下拉模式且按下
-#define IOA7_ADC_HIGH_PRESS_TH     1800 // ADC按键按下时大于此值，认为处于上拉模式且按下
 
-#define MAX_SOUND_EFFECT 3  // 3种有效的变声模式高音调 低音调 机器人音调
-#define DI_SOUND_TIMEOUT_COUNT   60000UL  // 下拉按键自动录音的超时时间，单位：微秒
-
-#define KEY_CONN_UNKNOWN 0
-#define KEY_CONN_HIGH    1
-#define KEY_CONN_LOW     2
 //
 // RTVC mode definition
 //
 #define VC4_SHIFT_PITCH_MODE            0
-// #define VC4_CONST_PITCH_MODE	        1
-// #define VC4_ECHO_MODE		            2
-// #define VC4_RobotEffect1 				3
 #define VC4_RobotEffect2 				4
 //
 // Envelope detection definition
@@ -75,14 +80,9 @@
 #define C_EnvDet_Running				0x0001
 #define C_EnvDet_AttackActive			0x0002
 #define C_EnvDet_ReleaseActive			0x0004
-#define LOW_REC_BLOCK   5   // 下拉录音机起始block
-#define AUTO_REC_BLOCK  8   // 上拉自动监听变声器起始block
 
 #define HIGH_KEY_RELEASE_CONFIRM 3
-#define ENVDET_ATTACK_LEVEL    2910
-#define ENVDET_ATTACK_TIME     80
-#define ENVDET_RELEASE_LEVEL   1250
-#define ENVDET_RELEASE_TIME    6500
+
 //**************************************************************************
 // External Function Declaration
 //**************************************************************************
@@ -127,11 +127,9 @@ struct	VC4WorkingRamStruct VC4WorkRam __attribute__((section("OVERLAP_VC4_RAM: .
 
 int VC_Mode;
 int ShiftPitchIdx;
-// int ConstPitchIdx;
-// int EchoGainIdx;
 int ADC_FIR_Type;
 int DAC_FIR_Type;
-// unsigned A1800_Idx = 0;
+
 unsigned long Block_Addr = 0; // 存储数据块的地址
 int chk_MIC_voice_flag = 0;  // 判断是否需要检测麦克风输入，中断相关
 unsigned Temp; // 检测麦克风状态临时变量

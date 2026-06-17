@@ -53,12 +53,12 @@ Define: DATA in "EnvDet_User.obj" with _DATA_SPI_SEC
 Define: CODE in "SACM_VC4_User.obj" with _CODE_SPI_SEC 
 Define: DATA in "SACM_VC4_User.obj" with _DATA_SPI_SEC 
 Define: __sn_section_RES_DIDI_A18 in "didi_a18.res" with _RESOURCE_SPI_SEC 
-Locate: __sn_init_table at 11940
-Locate: IRAM after __sn_init_table linkat #RAM
-Locate: IRam_Bank0 after __sn_init_table linkat #RAM
 Locate: _CODE_SPI_SEC at 9800
 Locate: _DATA_SPI_SEC after _CODE_SPI_SEC
 Locate: _RESOURCE_SPI_SEC at 20000
+Locate: __sn_init_table at 11940
+Locate: IRAM after __sn_init_table linkat #RAM
+Locate: IRam_Bank0 after __sn_init_table linkat #RAM
 Locate: SleepCode_RAMCode_SEC in "system.obj" at 10000 linkat 1000
 ;Align: SleepCode_RAMCode_SEC in "system.obj" with 0 
 Locate: SPIFC_RAMCode_SEC_0 in "SPI_Flash.obj" at 12100 linkat 10
@@ -339,8 +339,6 @@ Locate: CMPADC_ISR_RAMCode_SEC in "ComparatorADC.obj" at 12680 linkat 800
 ;Align: CODE in "lshiu2" of "CMacro1232.lib"  with 0 
 ;Locate: CODE in "_GPTag" of "CMacro1232.lib"  at 10ECA 
 ;Align: CODE in "_GPTag" of "CMacro1232.lib"  with 0 
-;Locate: __sn_init_table in "<internal obj.>" of "<internal lib.>"  at 11940 
-;Align: __sn_init_table in "<internal obj.>" of "<internal lib.>"  with 0 
 ;Locate: _CODE_SPI_SEC in "VolCompress_User.obj" at 9800 
 ;Align: _CODE_SPI_SEC in "VolCompress_User.obj" with 0 
 ;Locate: _CODE_SPI_SEC in "EnvDet_User.obj" at 9EAD 
@@ -367,3 +365,5 @@ Locate: CMPADC_ISR_RAMCode_SEC in "ComparatorADC.obj" at 12680 linkat 800
 ;Align: _CODE_SPI_SEC in "main.obj" with 0 
 ;Locate: _RESOURCE_SPI_SEC in "didi_a18.res" at 20000 
 ;Align: _RESOURCE_SPI_SEC in "didi_a18.res" with 0 
+;Locate: __sn_init_table in "<internal obj.>" of "<internal lib.>"  at 11940 
+;Align: __sn_init_table in "<internal obj.>" of "<internal lib.>"  with 0 
