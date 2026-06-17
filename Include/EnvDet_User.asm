@@ -37,8 +37,8 @@
 //**************************************************************************
 //.external T_SACM_VC_SpeechTable
 // 音量检测
-.external _Dbg_AttackCount
-.external _Dbg_ReleaseCount
+.external _Env_AttackCount
+.external _Env_ReleaseCount
 //**************************************************************************
 // RAM Definition Area
 //**************************************************************************
@@ -112,9 +112,9 @@ F_EnvDet_AttackActive:	.proc
 //	R1 = 0xFFFF;
 //	[P_IOB_Buffer] = R1;
 	push R1 to [SP]
-	R1 = [_Dbg_AttackCount]
+	R1 = [_Env_AttackCount]
 	R1 += 1
-	[_Dbg_AttackCount] = R1
+	[_Env_AttackCount] = R1
 	pop R1 from [SP]
 	retf;
 	.endp
@@ -131,9 +131,9 @@ F_EnvDet_ReleaseActive:	.proc
 //	R1 = 0x0000;
 //	[P_IOB_Buffer] = R1;
 	push R1 to [SP]
-	R1 = [_Dbg_ReleaseCount]
+	R1 = [_Env_ReleaseCount]
 	R1 += 1
-	[_Dbg_ReleaseCount] = R1
+	[_Env_ReleaseCount] = R1
 	pop R1 from [SP]
 	retf;
 	.endp

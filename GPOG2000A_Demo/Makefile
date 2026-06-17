@@ -1,6 +1,6 @@
 #####################################################################
 #																	 
-#	Created by u'nSP IDE V4.1.1		17:13:04	06/16/26
+#	Created by u'nSP IDE V4.1.1		12:49:35	06/17/26
 #
 #####################################################################
 
@@ -121,22 +121,22 @@ OBJFILES	= \
 "$(OUTDIR)\main.obj": "$(OUTDIR)\main.asm"
 	$(AS) $(CASFLAGS) $(INCLUDES) -o "$(OUTDIR)\main.obj" "$(OUTDIR)\main.asm" 
 
-"$(OUTDIR)\isr.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\isr.asm" ".\GPCE36_CE5.inc" ".\GPCE36_CE5_Body.inc" "..\Include\EnvDet.inc" 
+"$(OUTDIR)\isr.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\isr.asm" 
 	$(AS) $(ASFLAGS) $(INCLUDES) -o "$(OUTDIR)\isr.obj" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\isr.asm" 
 
-"$(OUTDIR)\system.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\system.asm" "GPCE36_CE5.inc" 
+"$(OUTDIR)\system.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\system.asm" 
 	$(AS) $(ASFLAGS) $(INCLUDES) -o "$(OUTDIR)\system.obj" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\system.asm" 
 
-"$(OUTDIR)\BootCode_User.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\BootCode_User.asm" ".\GPCE36_CE5.inc" ".\GPCE36_CE5_Body.inc" 
+"$(OUTDIR)\BootCode_User.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\BootCode_User.asm" 
 	$(AS) $(ASFLAGS) $(INCLUDES) -o "$(OUTDIR)\BootCode_User.obj" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\BootCode_User.asm" 
 
-"$(OUTDIR)\SACM_DVR1800_User.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\SACM_DVR1800_User.asm" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\DVR1800.inc" "GPCE36_CE5.inc" 
+"$(OUTDIR)\SACM_DVR1800_User.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\SACM_DVR1800_User.asm" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\DVR1800.inc" 
 	$(AS) $(ASFLAGS) $(INCLUDES) -o "$(OUTDIR)\SACM_DVR1800_User.obj" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\SACM_DVR1800_User.asm" 
 
-"$(OUTDIR)\SPI_Flash.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\SPI_Flash.asm" ".\GPCE36_CE5.inc" ".\GPCE36_CE5_Body.inc" 
+"$(OUTDIR)\SPI_Flash.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\SPI_Flash.asm" 
 	$(AS) $(ASFLAGS) $(INCLUDES) -o "$(OUTDIR)\SPI_Flash.obj" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\GPOG2000A_Demo\SPI_Flash.asm" 
 
-"$(OUTDIR)\SACM_A1800_fptr_User.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\SACM_A1800_fptr_User.asm" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\A1800_fptr.inc" "GPCE36_CE5.inc" "Resource.inc" 
+"$(OUTDIR)\SACM_A1800_fptr_User.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\SACM_A1800_fptr_User.asm" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\A1800_fptr.inc" 
 	$(AS) $(ASFLAGS) $(INCLUDES) -o "$(OUTDIR)\SACM_A1800_fptr_User.obj" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\SACM_A1800_fptr_User.asm" 
 
 "$(OUTDIR)\VolCompress_User.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\VolCompress_User.asm" 
@@ -145,19 +145,19 @@ OBJFILES	= \
 "$(OUTDIR)\ORAM_Arrangement.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\ORAM_Arrangement.asm" 
 	$(AS) $(ASFLAGS) $(INCLUDES) -o "$(OUTDIR)\ORAM_Arrangement.obj" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\ORAM_Arrangement.asm" 
 
-"$(OUTDIR)\ComparatorADC.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\ComparatorADC.asm" "GPCE36_CE5.inc" 
+"$(OUTDIR)\ComparatorADC.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\ComparatorADC.asm" 
 	$(AS) $(ASFLAGS) $(INCLUDES) -o "$(OUTDIR)\ComparatorADC.obj" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\ComparatorADC.asm" 
 
-"$(OUTDIR)\CTS_User.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\CTS_User.asm" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\CTS_Sensor.inc" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\Touch_Probe.inc" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\TP_Command.inc" "GPCE36_CE5.inc" 
+"$(OUTDIR)\CTS_User.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\CTS_User.asm" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\CTS_Sensor.inc" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\Touch_Probe.inc" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\TP_Command.inc" 
 	$(AS) $(ASFLAGS) $(INCLUDES) -o "$(OUTDIR)\CTS_User.obj" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\CTS_User.asm" 
 
-"$(OUTDIR)\TouchProbe_User.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\TouchProbe_User.asm" "GPCE36_CE5.inc" 
+"$(OUTDIR)\TouchProbe_User.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\TouchProbe_User.asm" 
 	$(AS) $(ASFLAGS) $(INCLUDES) -o "$(OUTDIR)\TouchProbe_User.obj" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\TouchProbe_User.asm" 
 
-"$(OUTDIR)\EnvDet_User.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\EnvDet_User.asm" "GPCE36_CE5.inc" 
+"$(OUTDIR)\EnvDet_User.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\EnvDet_User.asm" 
 	$(AS) $(ASFLAGS) $(INCLUDES) -o "$(OUTDIR)\EnvDet_User.obj" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\EnvDet_User.asm" 
 
-"$(OUTDIR)\SACM_VC4_User.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\SACM_VC4_User.asm" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\VC4.inc" "GPCE36_CE5.inc" 
+"$(OUTDIR)\SACM_VC4_User.obj": "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\SACM_VC4_User.asm" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\VC4.inc" 
 	$(AS) $(ASFLAGS) $(INCLUDES) -o "$(OUTDIR)\SACM_VC4_User.obj" "D:\zwc\app\unSPIDE\Example\DemoCode\GPOG2000A_DVR1800_VC4_EnvDet_PWMorDACOut_2025.08.28\Include\SACM_VC4_User.asm" 
 
 
