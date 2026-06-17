@@ -82,8 +82,8 @@
 //**************************************************************************
 // External Function Declaration
 //**************************************************************************
-extern void VolCompressInitial(void);
-extern void SetVolCompressLevel(unsigned CompLev);
+// extern void VolCompressInitial(void);
+// extern void SetVolCompressLevel(unsigned CompLev);
 extern void CMPADC_Init(void);
 
 extern void MoveSPIDriverToRAM_0(void);
@@ -123,8 +123,8 @@ struct	VC4WorkingRamStruct VC4WorkRam __attribute__((section("OVERLAP_VC4_RAM: .
 
 int VC_Mode;
 int ShiftPitchIdx;
-int ConstPitchIdx;
-int EchoGainIdx;
+// int ConstPitchIdx;
+// int EchoGainIdx;
 int ADC_FIR_Type;
 int DAC_FIR_Type;
 // unsigned A1800_Idx = 0;
@@ -205,8 +205,8 @@ int main()
 
 	VC_Mode = VC4_SHIFT_PITCH_MODE;
 	ShiftPitchIdx = 0;
-	ConstPitchIdx = 0;    
-  	EchoGainIdx = 4;
+	// ConstPitchIdx = 0;    
+  	// EchoGainIdx = 4;
 	// 开机测试
 	// PlayDiSound();
 	// 开机后禁用数字 IO ，进入 IOA7 ADC 按键检测模式
@@ -647,6 +647,8 @@ void Auto_StartPlayRecorded(void)
 	Block_Addr = Block_Addr + 0x8000;
 	DVR18_ExtMem_Low = Block_Addr & 0xffff;
 	DVR18_ExtMem_High = Block_Addr >> 16;
+	// DVR18_ExtMem_Low = 0x8000;
+	// DVR18_ExtMem_High = 0x0004;
 
 	SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
 	
@@ -1048,6 +1050,8 @@ void PlayRecord(void)
 	Block_Addr = Block_Addr + 0x8000;
 	DVR18_ExtMem_Low = Block_Addr & 0xffff;
 	DVR18_ExtMem_High = Block_Addr >> 16;
+	// DVR18_ExtMem_Low = 0x0;
+	// DVR18_ExtMem_High = 0x0003;
 
 	SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
 
