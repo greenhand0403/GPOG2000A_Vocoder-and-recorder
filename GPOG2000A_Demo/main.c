@@ -216,18 +216,9 @@ int main()
 
 	VC_Mode = VC4_SHIFT_PITCH_MODE;
 	ShiftPitchIdx = 0;
-	// ConstPitchIdx = 0;    
-  	// EchoGainIdx = 4;
-	// 开机测试
-	// PlayDiSound();
 	// 开机后禁用数字 IO ，进入 IOA7 ADC 按键检测模式
 	Disable_IOA7_DigitalKey();
 	CMPADC_IOA7Key_Init();
-	// 测试代码，开机进入上拉按键模式，初始化需要的音量检测
-	// SystemMode = KEYDOWN_HIGH_MODE;
-	// AutoState = AUTO_IDLE;
-	// LastAttackCount = 0;
-	// LastReleaseCount = 0;
 	while(1)
 	{
 		App_KeyScanTick();
@@ -293,21 +284,10 @@ void LowRecorder_Tick(void)
 				SACM_DVR1800_Stop();
 				g_tmaDiv = 0;
 				g_tma64Ticks = 0;
-				// TODO: 等待写入录音长度头，这个while有点危险，程序会卡在这里，是不是要模仿播放滴声那样加个超时就退出？
-				// 开启超时保护
-				// waitCnt = 0;
 				while ((SACM_DVR1800_Status() & 0x01) != 0)
 				{
 					SACM_DVR1800_ServiceLoop();
 					System_ServiceLoop();
-					// 超时保护
-					// waitCnt++;
-
-					// if (waitCnt > WaitDelayTime)
-					// {
-					// 	SACM_DVR1800_Stop();
-					// 	break;
-					// }
 				}
 				// 再播放滴声提示，里面有自动判断等待播放完滴声提示
 				PlayDiSound();
@@ -332,7 +312,7 @@ void LowRecorder_Tick(void)
 			{
 				// 长度头正确，才允许播放
 				SystemMode = SYS_LOW_PLAYING;
-
+				// 播放录音
 				PlayRecord();
 			}
 			break;
@@ -340,9 +320,8 @@ void LowRecorder_Tick(void)
 			// 等待播放录音完毕，重新允许IOA7 ADC按键，同时禁用 数字按键
 			if ((SACM_VC4_Status() & 0x01) == 0)
 			{
-				// Disable_IOA7_DigitalKey(); // 如果禁用数字按键，会导致开机后无法从上拉连接进入高音调？
 				SystemMode = SYS_ADC_IDLE;
-				Disable_IOA7_DigitalKey(); // 奇怪了，我禁用，可以正常从开机进入上拉高音调啊！
+				Disable_IOA7_DigitalKey();
 				CMPADC_IOA7Key_Init();
 			}
 			else
@@ -417,11 +396,7 @@ void Handle_Key(void)
 			
 		if (KeyCount < MAX_SOUND_EFFECT)
 		{
-			// 只有从空闲状态进入高音调模式时，才会擦除
-			// if (KeyCount == 0)
-			{
-				Auto_PrepareRecord();
-			}
+			Auto_PrepareRecord();
 			AutoState = AUTO_WAIT_ATTACK;
 			KeyCount++;
 			// 清旧的 attack/release 计数，避免吃旧状态
@@ -457,7 +432,6 @@ void Auto_StateMachine(void)
 			break;
 
 		case AUTO_RECORDING:
-			// TODO: 录音期间
 			// 情况1：用户提前停止说话，EnvDet 检测到 release
 			// 情况2：用户一直说话/一直播放音乐，达到最长 10 秒，强制视为 release
 			if ((Env_ReleaseCount != LastReleaseCount)||(g_tma64Ticks >= MAX_REC_TIME))
@@ -474,7 +448,6 @@ void Auto_StateMachine(void)
 			break;
 
 		case AUTO_WAIT_REC_END:
-			// SACM_DVR1800_ServiceLoop();
 			// 自动监听式变声器停止录音后，开始变声播放
 			if ((SACM_DVR1800_Status() & 0x01) == 0)
 			{
@@ -485,7 +458,6 @@ void Auto_StateMachine(void)
 			break;
 
 		case AUTO_PLAYING:
-			// SACM_VC4_ServiceLoop();
 			// 这个状态是VC4播放完毕,此时回到IDLE状态,等待下一个attack事件
 			if ((SACM_VC4_Status() & 0x01) == 0)
 			{
@@ -505,8 +477,6 @@ void Auto_StateMachine(void)
 }
 void PlayDiSound(void)
 {
-    // unsigned long timeout = DI_SOUND_TIMEOUT_COUNT;
-
     if(chk_MIC_voice_flag == 1)
         chk_MIC_voice_flag = 0;
 
@@ -521,12 +491,10 @@ void PlayDiSound(void)
     SACM_A1800_fptr_Stop();
 	SACM_VC4_Stop();
 
-    // A1800_Idx = 0;
     USER_A1800_fptr_SetStartAddr(0);
     SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
 
     SACM_VC4_Initial();
-	// 很奇怪这两句话的作用是什么？注释掉的话，可以播放滴声，但是无法自动监听并回播录音了
     // SACM_VC4_AD_FIRType(ADC_FIR_Type);
     // SACM_VC4_DA_FIRType(DAC_FIR_Type);
 	SACM_VC4_AD_FIRType(C_ADC_FIR_Type0);
@@ -537,30 +505,13 @@ void PlayDiSound(void)
     VC_Mode = VC4_SHIFT_PITCH_MODE;
     SACM_VC4_Mode(VC_Mode, &VC4WorkRam);
     SACM_VC4_Play(Manual_Mode_Index, DAC1, Ramp_Up + Ramp_Dn);
-	// 开启超时保护
-	// waitCnt = 0;
+
 	// 必须等待滴声播放完
     while ((SACM_VC4_Status() & 0x01) != 0)
     {
         SACM_VC4_ServiceLoop();
         // SACM_DVR1800_ServiceLoop(); // 播放滴声不需要 dvr1800 的状态更新，它主要是录音时使用
         System_ServiceLoop();
-		
-        // if (--timeout == 0)
-        // {
-        //     SACM_VC4_Stop();
-        //     SACM_A1800_fptr_Stop();
-        //     break;
-        // }
-		// 超时保护
-		// waitCnt++;
-
-		// if (waitCnt > WaitDelayTime)
-		// {
-		// 	SACM_VC4_Stop();
-        //     SACM_A1800_fptr_Stop();
-		// 	break;
-		// }
     }
 	// 调用一下使能数字按键，清除按键状态，避免重复触发按键事件
 	if (KeyConnMode == KEY_CONN_HIGH)
@@ -578,7 +529,7 @@ void EnableEnvDet(void)
 	EnvDet_SetReleaseLevel(EnvDet_ReleaseLevel);
 	EnvDet_SetReleaseTime(EnvDet_ReleaseTime);
 	EnvDet_Start();
-	chk_MIC_voice_flag = 1;   ////start MIC EnvDet
+	chk_MIC_voice_flag = 1;   				//start MIC EnvDet
 
     Clear_AutoCount();
 }
@@ -600,7 +551,7 @@ void Auto_PrepareRecord(void)
     SACM_VC4_Stop();
     SACM_DVR1800_Stop();
 
-    // 不擦除录音区，直接变声
+    // 不擦除录音区直接变声
     // __asm("INT OFF");
 
     // MoveSPIDriverToRAM_0();
@@ -610,12 +561,12 @@ void Auto_PrepareRecord(void)
 
     // __asm("INT FIQ,IRQ");
 
-    // 再初始化 DVR1800
+    // 初始化 DVR1800
     MoveSPIDriverToRAM_0();
     MoveSPIDriverToRAM_1();
     SACM_DVR1800_Initial();
 
-    // 最后才启动麦克风音量检测
+    // 启动麦克风音量检测
     EnableEnvDet();
 	AutoBusy = 0;
 }
@@ -628,7 +579,7 @@ void Auto_StopWorkMode(void)
 	// 停止麦克风音量检测功能
     CMPADC_Stop();
 	EnvDet_Stop();
-	chk_MIC_voice_flag = 0;	   ////stop MIC EnvDet
+	chk_MIC_voice_flag = 0;   				//stop MIC EnvDet
 
 	// 停止任何播放或录音的行为
     SACM_A1800_fptr_Stop();
@@ -648,7 +599,7 @@ void Auto_AttackStartRecord(void)
 void Auto_StartPlayRecorded(void)
 {
 	if(chk_MIC_voice_flag == 1)
-		chk_MIC_voice_flag = 0;	   ////stop MIC EnvDet
+		chk_MIC_voice_flag = 0;   				//stop MIC EnvDet
 
     CMPADC_Stop();
     SACM_A1800_fptr_Initial();
@@ -657,7 +608,7 @@ void Auto_StartPlayRecorded(void)
     A1800_fptr_Event_Initial();
     A1800_fptr_IO_Event_Enable();
 	// VolCompressInitial();
-	// SetVolCompressLevel(12);// 空间爆满
+	// SetVolCompressLevel(12);// 代码空间爆满
     SACM_A1800_fptr_Stop();
 
     Block_Addr = ((AUTO_REC_BLOCK + 0) * 65536)/2;// 变声器使用 AUTO_REC_BLOCK
@@ -669,7 +620,7 @@ void Auto_StartPlayRecorded(void)
 
 	SACM_A1800_fptr_Play(Manual_Mode_Index, DAC1, 0);
 	
-	SACM_VC4_Initial();			// VC4 initial
+	SACM_VC4_Initial();				// VC4 initial
 	// SACM_VC4_AD_FIRType(ADC_FIR_Type);  // 自动监听式变声播放也需要这个配置，否则没法播放
 	// SACM_VC4_DA_FIRType(DAC_FIR_Type);
 	SACM_VC4_AD_FIRType(C_ADC_FIR_Type0);
@@ -701,7 +652,7 @@ void Auto_StartPlayRecorded(void)
 void CMPADC_Stop(void)
 {
 	*P_INT_Ctrl &= ~C_IRQ3_ADC;
-	// *P_INT_Status = C_IRQ3_ADC; // 注释掉无影响？还能继续播放录音
+	// *P_INT_Status = C_IRQ3_ADC; // 注释掉无影响，还能继续播放录音
 }
 void EnvDet_Playloop(void)
 {
@@ -956,10 +907,7 @@ void Handle_HighWaitRelease(void)
 
         if (KeyCount < MAX_SOUND_EFFECT)
         {
-			// if (KeyCount == 0)
-			{
-				Auto_PrepareRecord();
-			}
+			Auto_PrepareRecord();
             KeyCount++;
 			AutoState = AUTO_WAIT_ATTACK;
             // 清旧的 attack/release 计数，避免吃旧状态
@@ -1077,8 +1025,6 @@ unsigned IsHighKeyPressedRaw(void)
 }
 void Auto_AbortCurrentWork(void)
 {
-    // unsigned abortWait;
-
     /*
        1. 先禁止 EnvDet，避免刚打断时又产生 attack/release 事件
     */
@@ -1093,20 +1039,10 @@ void Auto_AbortCurrentWork(void)
     {
         SACM_DVR1800_Stop();
 
-        // abortWait = 0;
-
         while ((SACM_DVR1800_Status() & 0x01) != 0)
         {
             SACM_DVR1800_ServiceLoop();
             System_ServiceLoop();
-
-            // abortWait++;
-
-            // if (abortWait > WaitDelayTime)
-            // {
-            //     SACM_DVR1800_Stop();
-            //     break;
-            // }
         }
     }
     else
