@@ -122,6 +122,20 @@ void Handle_IOA7_ADC_Key(void);
 // 下拉模式，长按 ADC 按键开启录音
 void Do_IOA7_LowPress_RecorderAction(void);
 
+void PlayDiSound(void);
+void App_KeyScanTick(void);
+void LowRecorder_Tick(void);
+void Auto_StateMachine(void);
+void EnvDet_Playloop(void);
+void Handle_Key(void);
+void Handle_HighWaitRelease(void);
+unsigned Check_Record_10s_Length(void);
+void PlayRecord(void);
+unsigned Scan_IOA7_ADC_Key_Polling(void);
+unsigned IsHighKeyPressedRaw(void);
+void Auto_AbortCurrentWork(void);
+void Clear_AutoCount(void);
+
 extern unsigned DVR18_ExtMem_Low;  // 录音存储的地址低位
 extern unsigned DVR18_ExtMem_High;  // 录音存储的地址高位
 extern unsigned R_ADCKeyRaw;  // 下拉按键的 ADC 值
@@ -216,6 +230,7 @@ int main()
 
 	VC_Mode = VC4_SHIFT_PITCH_MODE;
 	ShiftPitchIdx = 0;
+	PlayDiSound();
 	// 开机后禁用数字 IO ，进入 IOA7 ADC 按键检测模式
 	Disable_IOA7_DigitalKey();
 	CMPADC_IOA7Key_Init();
