@@ -1076,8 +1076,8 @@
 .define C_SPI1_SCK_SEL				0x0007
 .define C_SPI1_SCK_SYSCLK			0x0000
 .define C_SPI1_SCK_SYSCLK_Div_2		0x0001
-//.define C_SPI1_SCK_SYSCLK_Div_3		0x0002
-//.define C_SPI1_SCK_SYSCLK_Div_4		0x0003
+.define C_SPI1_SCK_SYSCLK_Div_3		0x0002
+.define C_SPI1_SCK_SYSCLK_Div_4		0x0003
 //.define C_SPI1_SCK_SYSCLK_Div_5		0x0004
 //.define C_SPI1_SCK_SYSCLK_Div_6		0x0005
 //.define C_SPI1_SCK_SYSCLK_Div_7		0x0006
