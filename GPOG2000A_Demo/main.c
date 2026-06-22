@@ -24,7 +24,9 @@
 //**************************************************************************
 // 变声和录音业务参数
 #define MAX_REC_TIME (64*10)  // 上拉自动监听变声和下拉按键自动录音的 最长时间 换算从录音长度头就是 59b2 0000 低地址 高地址 换算后是压缩后的 22962 byte 大约 23 KB
-#define REC_LEN_10S_LOW_WORD   0x59B2
+// 当前 10 秒录音实测：0x5962, 0x598A, 0x59B2
+// 给一点余量，避免不同 Flash / 停止时刻 / 压缩帧边界导致误差
+#define REC_LEN_10S_LOW_WORD   0x5900
 #define REC_LEN_10S_HIGH_WORD  0x0000
 #define MAX_SOUND_EFFECT 3  // 3种有效的变声模式高音调 低音调 机器人音调
 // 触发自动监听式变声器的参数
@@ -32,9 +34,9 @@
 #define ENVDET_ATTACK_TIME     80
 #define ENVDET_RELEASE_LEVEL   1250
 #define ENVDET_RELEASE_TIME    6500
-// 下拉录音机起始block
+// 下拉录音机起始  block  对应地址 0x30000
 #define LOW_REC_BLOCK           5
-// 上拉自动监听变声器起始block
+// 上拉自动监听变声器  block  对应地址 0x48000
 #define AUTO_REC_BLOCK          8   
 
 // 系统工作状态定义
@@ -230,7 +232,7 @@ int main()
 
 	VC_Mode = VC4_SHIFT_PITCH_MODE;
 	ShiftPitchIdx = 0;
-	PlayDiSound();
+	// PlayDiSound();
 	// 开机后禁用数字 IO ，进入 IOA7 ADC 按键检测模式
 	Disable_IOA7_DigitalKey();
 	CMPADC_IOA7Key_Init();
@@ -567,14 +569,14 @@ void Auto_PrepareRecord(void)
     SACM_DVR1800_Stop();
 
     // 不擦除录音区直接变声
-    // __asm("INT OFF");
+    __asm("INT OFF");
 
-    // MoveSPIDriverToRAM_0();
-    // MoveSPIDriverToRAM_2();
-    // SPI_Flash_Block_Erase(R_REC_block + 0);// 变声器使用 block 6
-    // SPI_Flash_Block_Erase(R_REC_block + 1);
+    MoveSPIDriverToRAM_0();
+    MoveSPIDriverToRAM_2();
+    SPI_Flash_Block_Erase(R_REC_block + 0);// 变声器使用 block 6
+    SPI_Flash_Block_Erase(R_REC_block + 1);
 
-    // __asm("INT FIQ,IRQ");
+    __asm("INT FIQ,IRQ");
 
     // 初始化 DVR1800
     MoveSPIDriverToRAM_0();
@@ -949,12 +951,12 @@ void Do_IOA7_LowPress_RecorderAction(void)
 	
 	WatchdogClear();
 	
-	// __asm("INT OFF");
-	// MoveSPIDriverToRAM_0();
-	// MoveSPIDriverToRAM_2();
-	// SPI_Flash_Block_Erase(R_REC_block);
-	// SPI_Flash_Block_Erase(R_REC_block + 1);
-	// __asm("INT FIQ,IRQ");
+	__asm("INT OFF");
+	MoveSPIDriverToRAM_0();
+	MoveSPIDriverToRAM_2();
+	SPI_Flash_Block_Erase(R_REC_block);
+	SPI_Flash_Block_Erase(R_REC_block + 1);
+	__asm("INT FIQ,IRQ");
 	// 初始化录音需要的 CMPADC
 	CMPADC_Init();
 	
@@ -995,8 +997,7 @@ unsigned Check_Record_10s_Length(void)
 
     SPI_Flash_ReadNWords(RecLenHeadBuf, 2, addr);
 
-    if ((RecLenHeadBuf[0] == REC_LEN_10S_LOW_WORD) &&
-        (RecLenHeadBuf[1] == REC_LEN_10S_HIGH_WORD))
+    if ((RecLenHeadBuf[0] & 0xFF00) == REC_LEN_10S_LOW_WORD)
     {
         return 1;
     }
