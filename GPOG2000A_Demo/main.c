@@ -66,8 +66,8 @@
 #define AUTO_PLAYING            4   // 上拉模式，正在播放刚才录音
 // 上拉按键抖动
 #define HIGH_KEY_RELEASE_CONFIRM     3
-// 下拉按键的长按约 2 秒
-#define ADC_LOW_KEY_LONG_TICKS       128
+// 下拉按键的长按约 2 秒 改为 3 秒
+#define ADC_LOW_KEY_LONG_TICKS       192
 // 下拉按键小于这个值认为是按键抖动
 #define ADC_LOW_KEY_SHORT_TICKS      3
 // 下拉 ADC 按键状态定义
